@@ -1,0 +1,4 @@
+interface:
+  display_name: "ChaosPPT"
+  short_description: "Design HTML presentations and export checked PDF/PPTX files"
+  default_prompt: "Use $chaosppt to turn my materials into a consistent HTML presentation and export PDF and image-based PPTX."

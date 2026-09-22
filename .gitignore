@@ -1,0 +1,4 @@
+node_modules/
+**/dist/
+**/.chaosppt-*
+.DS_Store

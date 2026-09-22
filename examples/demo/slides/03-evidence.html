@@ -1,0 +1,8 @@
+<head><style>.evidence-layout{display:grid;grid-template-columns:2fr 1fr;gap:60px;margin-top:34px}.chart-panel{background:#e7ecdf;padding:28px 34px;height:396px;border-radius:8px}.chart-head{display:flex;justify-content:space-between;font-size:18px;margin-bottom:20px}.chart-panel canvas{width:100%;height:272px;display:block}.insight{padding-top:20px}.insight .big{font-size:92px;line-height:1.2;font-weight:600;letter-spacing:-4px}.insight h2{font-size:29px;margin-top:22px}.insight p{font-size:22px;color:#617168;margin-top:15px;line-height:1.7}.source{margin-top:22px;font-size:16px;color:#617168}.evidence-title{font-size:52px;max-width:1340px;line-height:1.25}</style></head>
+<header class="slide-header"><span class="eyebrow">02 / RENDERING CONTRACT</span><h1 class="evidence-title" data-element-id="long-title">让长标题与异步图表，在导出时依然保持<br>完整、清晰、可验证的呈现</h1></header>
+<div class="evidence-layout">
+<figure class="chart-panel" data-element-id="async-chart"><div class="chart-head"><span>季度演示数据</span><span>单位：示例值</span></div><canvas id="chart" width="1600" height="544" aria-label="合成数据季度柱状图"></canvas></figure>
+<aside class="insight"><span class="tag">SYNTHETIC DATA</span><div class="big num" data-element-id="metric">+32%</div><h2>数据就绪，再开始捕获</h2><p>页面显式注册异步任务。<br>字体、图像与布局稳定后，<br>渲染引擎才开始导出。</p></aside>
+</div>
+<p class="source">来源：assets/data.json · 合成演示数据，不代表真实业务表现</p>
+<script src="../assets/chart.js"></script>

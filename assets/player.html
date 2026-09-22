@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ChaosPPT / Studio</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #101614;
+        color: #edf4eb;
+        font:
+          14px system-ui,
+          sans-serif;
+        height: 100vh;
+        display: grid;
+        grid-template-rows: 68px 1fr 58px;
+      }
+      header {
+        padding: 0 28px;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        border-bottom: 1px solid #2c3530;
+      }
+      header strong {
+        font-size: 18px;
+        letter-spacing: -0.5px;
+      }
+      header strong span {
+        color: #c5ff64;
+      }
+      .pill {
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: #bdc8c0;
+        border: 1px solid #455044;
+        border-radius: 20px;
+        padding: 6px 9px;
+      }
+      #title {
+        margin-left: auto;
+        color: #9faea5;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: 0;
+      }
+      nav {
+        overflow: auto;
+        border-right: 1px solid #2c3530;
+        padding: 18px 12px;
+      }
+      button {
+        cursor: pointer;
+        background: transparent;
+        color: inherit;
+        border: 1px solid #3b483f;
+        border-radius: 7px;
+        padding: 9px 14px;
+        font: inherit;
+      }
+      button:hover {
+        border-color: #bbf36a;
+      }
+      nav button {
+        width: 100%;
+        text-align: left;
+        display: flex;
+        gap: 14px;
+        border-color: transparent;
+        padding: 16px 10px;
+        margin-bottom: 6px;
+      }
+      nav button.active {
+        background: #283520;
+        color: #d8ff9c;
+      }
+      nav small {
+        color: #83937e;
+      }
+      #stage {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        padding: 32px;
+        position: relative;
+      }
+      #holder {
+        position: relative;
+        box-shadow: 0 24px 70px #0005;
+        flex-shrink: 0;
+        background: #f5f3ed;
+      }
+      iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        border: 0;
+        transform-origin: top left;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      iframe.visible {
+        opacity: 1;
+      }
+      footer {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 26px;
+        border-top: 1px solid #2c3530;
+      }
+      #status {
+        color: #8b9a8e;
+        margin-left: auto;
+        font-size: 12px;
+      }
+      #error {
+        position: absolute;
+        padding: 30px;
+        white-space: pre-wrap;
+        color: #ffb1a7;
+        display: none;
+        background: #291b1b;
+        z-index: 2;
+        max-width: 80%;
+      }
+      body.present main {
+        grid-template-columns: 1fr;
+      }
+      body.present nav {
+        display: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        iframe {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Chaos<span>PPT</span></strong
+      ><span class="pill">HTML STUDIO</span><span id="title"></span>
+    </header>
+    <main>
+      <nav aria-label="页面列表"></nav>
+      <div id="stage">
+        <div id="error"></div>
+        <div id="holder"></div>
+      </div>
+    </main>
+    <footer>
+      <button id="prev" aria-label="上一页">←</button><span id="counter"></span
+      ><button id="next" aria-label="下一页">→</button
+      ><button id="present">演示 / F</button
+      ><span id="status">← → 切换 · Home / End · 自动刷新</span>
+    </footer>
+    <script>
+      let deck,
+        index = 0,
+        revision = "",
+        frame;
+      const $ = (s) => document.querySelector(s),
+        holder = $("#holder"),
+        stage = $("#stage");
+      function fit() {
+        if (!deck) return;
+        const scale = Math.min(
+          (stage.clientWidth - 64) / deck.size.width,
+          (stage.clientHeight - 64) / deck.size.height,
+        );
+        holder.style.width = deck.size.width * scale + "px";
+        holder.style.height = deck.size.height * scale + "px";
+        if (frame) frame.style.transform = `scale(${scale})`;
+      }
+      function show(i) {
+        index = Math.max(0, Math.min(deck.slides.length - 1, i));
+        const s = deck.slides[index];
+        location.hash = s.id;
+        document
+          .querySelectorAll("nav button")
+          .forEach((b, j) => b.classList.toggle("active", j === index));
+        $("#counter").textContent = `${index + 1} / ${deck.slides.length}`;
+        const next = document.createElement("iframe");
+        next.title = s.title || s.id;
+        next.width = deck.size.width;
+        next.height = deck.size.height;
+        next.src = "/slide/" + s.id;
+        next.setAttribute("sandbox", "allow-scripts allow-same-origin");
+        next.onload = () => {
+          next.classList.add("visible");
+          try {
+            next.contentWindow.addEventListener("keydown", key);
+          } catch {}
+        };
+        frame?.remove();
+        holder.append(next);
+        frame = next;
+        fit();
+      }
+      async function load() {
+        const response = await fetch("/api/deck");
+        if (!response.ok) throw new Error(await response.text());
+        deck = await response.json();
+        $("#title").textContent = deck.title;
+        $("nav").replaceChildren();
+        deck.slides.forEach((s, i) => {
+          const b = document.createElement("button"),
+            n = document.createElement("small"),
+            t = document.createElement("span");
+          n.textContent = String(i + 1).padStart(2, "0");
+          t.textContent = s.title || s.id;
+          b.append(n, t);
+          b.onclick = () => show(i);
+          $("nav").append(b);
+        });
+        const requested = deck.slides.findIndex(
+          (s) => s.id === location.hash.slice(1),
+        );
+        show(requested >= 0 ? requested : index);
+        $("#error").style.display = "none";
+      }
+      function error(e) {
+        $("#error").textContent = e.message;
+        $("#error").style.display = "block";
+      }
+      function key(e) {
+        if (["ArrowRight", "PageDown", " "].includes(e.key)) {
+          e.preventDefault();
+          show(index + 1);
+        }
+        if (["ArrowLeft", "PageUp"].includes(e.key)) {
+          e.preventDefault();
+          show(index - 1);
+        }
+        if (e.key === "Home") show(0);
+        if (e.key === "End") show(deck.slides.length - 1);
+        if (e.key.toLowerCase() === "f") $("#present").click();
+      }
+      $("#next").onclick = () => show(index + 1);
+      $("#prev").onclick = () => show(index - 1);
+      $("#present").onclick = () => {
+        document.body.classList.toggle("present");
+        fit();
+      };
+      window.addEventListener("keydown", key);
+      new ResizeObserver(fit).observe(stage);
+      window.addEventListener("hashchange", () => {
+        const i = deck?.slides.findIndex(
+          (s) => s.id === location.hash.slice(1),
+        );
+        if (i >= 0 && i !== index) show(i);
+      });
+      load().catch(error);
+      let polling = false;
+      setInterval(async () => {
+        if (polling) return;
+        polling = true;
+        try {
+          const r = await fetch("/api/revision");
+          if (!r.ok) throw new Error(await r.text());
+          const data = await r.json();
+          if (revision && data.revision !== revision) await load();
+          revision = data.revision;
+        } catch (e) {
+          error(e);
+        } finally {
+          polling = false;
+        }
+      }, 1200);
+    </script>
+  </body>
+</html>

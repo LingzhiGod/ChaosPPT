@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "title": "ChaosPPT · HTML 演示文稿",
+  "size": { "width": 1600, "height": 900 },
+  "theme": "theme.css",
+  "fonts": [
+    {
+      "family": "Noto Sans SC",
+      "file": "assets/NotoSansSC.ttf",
+      "weight": "100 900"
+    }
+  ],
+  "masters": { "content": "masters/content.html" },
+  "render": {
+    "timeoutMs": 20000,
+    "scale": 2,
+    "allowRemote": false,
+    "seed": 42
+  },
+  "slides": [
+    {
+      "id": "cover",
+      "file": "slides/01-cover.html",
+      "title": "设计自由，交付稳定",
+      "message": "HTML 是设计源文件",
+      "notes": "这是引擎示例，不含真实业务数据。"
+    },
+    {
+      "id": "workflow",
+      "file": "slides/02-workflow.html",
+      "title": "从材料到演示文稿",
+      "master": "content",
+      "notes": "主题统一视觉，母版统一骨架，浏览器负责排版。"
+    },
+    {
+      "id": "evidence",
+      "file": "slides/03-evidence.html",
+      "title": "异步图表与长标题",
+      "master": "content",
+      "sources": ["assets/data.json（合成演示数据）"],
+      "notes": "本页所有数据均为合成样例，仅用于演示异步 Canvas/SVG 渲染。"
+    }
+  ]
+}

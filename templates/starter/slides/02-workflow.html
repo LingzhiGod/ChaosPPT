@@ -1,0 +1,69 @@
+<head>
+  <style>
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 42px;
+      margin-top: 54px;
+    }
+    .step {
+      border-top: 2px solid #18352c;
+      padding-top: 26px;
+    }
+    .step .index {
+      font-size: 17px;
+      color: #617168;
+      margin-bottom: 38px;
+    }
+    .step h2 {
+      font-size: 39px;
+      margin-bottom: 22px;
+    }
+    .step p {
+      font-size: 25px;
+      line-height: 1.8;
+      color: #617168;
+    }
+    .strip {
+      margin-top: 65px;
+      background: #e2e8d8;
+      padding: 28px 34px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+    .strip strong {
+      font-size: 25px;
+    }
+    .strip span {
+      font-size: 22px;
+      color: #617168;
+    }
+  </style>
+</head>
+<header class="slide-header">
+  <span class="eyebrow">01 / AUTHORING SYSTEM</span>
+  <h1 data-element-id="workflow-title">从完整材料，到完整演示</h1>
+</header>
+<p class="lead">内容与设计保留在源文件，浏览器负责计算与呈现。</p>
+<div class="steps">
+  <article class="step">
+    <div class="index">01 — PLAN</div>
+    <h2>先组织观点</h2>
+    <p>为每页定义标题、核心结论与来源。<br />顺序由大纲决定，而非文件名。</p>
+  </article>
+  <article class="step">
+    <div class="index">02 — DESIGN</div>
+    <h2>再构建页面</h2>
+    <p>自由使用 Grid、Flex、SVG 与 Canvas。<br />主题与母版保持跨页一致。</p>
+  </article>
+  <article class="step">
+    <div class="index">03 — DELIVER</div>
+    <h2>检查后交付</h2>
+    <p>等待字体与图表就绪，检查溢出。<br />导出 PDF 与整页图片式 PPTX。</p>
+  </article>
+</div>
+<div class="strip" data-element-id="workflow-summary">
+  <strong>一份 HTML 设计源</strong><span>→</span><span>浏览器预览</span
+  ><span>→</span><span>结构化检查</span><span>→</span><span>多格式输出</span>
+</div>
