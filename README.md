@@ -54,7 +54,7 @@ node scripts/install-skill.mjs /absolute/path/to/skills/chaosppt
 - 本机预览、键盘翻页、淡入换页、文件变化刷新。
 - Promise 就绪协议、捕获钩子、图片解码、字体等待、晚发起资源等待、布局稳定采样、超时保护。
 - 越界、裁切/滚动容器溢出、小字号、资源/脚本/字体失败的结构化诊断。
-- PNG（1–4 倍）、浏览器文本/矢量 PDF、截图 PDF、整页图片 PPTX（含讲稿与来源备注）。
+- PNG（1–4 倍）、浏览器文本/矢量 PDF、截图 PDF、图片背景 PPTX（含讲稿与来源备注），支持原生 MP4/GIF 嵌入。
 - 导出错误阻断，旧产物保护、构建锁、原子目录替换。
 - 导出验证：源文件指纹、文件哈希、尺寸、页数、PPTX 顺序、内嵌图片与铺满位置。
 - 配套可独立运行的 Skill、中文示例、单元/浏览器/集成回归测试。
@@ -106,7 +106,7 @@ dist/               全部由引擎生成
 
 ## 当前边界
 
-- PPTX 内容为图片，文字/图表不是原生可编辑对象；换页动画仅在 HTML 预览中实现。
+- PPTX 基础页面为图片，文字/图表不是原生可编辑对象；标记的 MP4/GIF 是原生媒体对象。换页动画仅在 HTML 预览中实现。
 - 无任意 HTML 自动拆页、拖拽编辑器、复杂图层面板、主题编辑 GUI。
 - 浏览器直接运行 JS；JSX/TypeScript/npm bare imports 需创作者自行预编译。
 - 布局诊断不等于视觉审稿：刻意重叠、滤镜、缺字、图表内容与信息准确性仍需检查。
@@ -130,3 +130,38 @@ python3 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/c
 主要模块：`project` 协议、`server` 页面组装、`browser-runtime` 生命周期、`diagnostics` DOM 测量、`renderer` 构建、`verify` 产物校验、`cli` 命令入口。锁文件固定依赖；对 PptxGenJS 的 image-size 依赖使用修复版本覆盖。
 
 依赖资料：[Playwright](https://playwright.dev/docs/api/class-page)、[PptxGenJS](https://gitbrent.github.io/PptxGenJS/docs/api-images/)、[pdf-lib](https://pdf-lib.js.org/)、[Noto Sans SC](https://github.com/google/fonts/tree/main/ofl/notosanssc)。
+
+## MP4 与 GIF 原生嵌入
+
+在原生 HTML 元素上添加 `data-pptx-media`：
+
+```html
+<video
+  data-pptx-media
+  src="assets/clip.mp4"
+  poster="assets/poster.png"
+  controls
+  preload="metadata"
+  style="width:640px;height:360px;object-fit:fill"
+></video>
+<img
+  data-pptx-media
+  src="assets/animation.gif"
+  style="width:640px;height:360px;object-fit:fill"
+  alt="动画示例"
+/>
+```
+
+- **HTML**：正常视频/GIF 播放。
+- **PPTX**：原始 MP4/GIF 真正内嵌，而非视频链接或静态截图。
+- **PDF / PNG**：视频显示封面，GIF 固定首帧。
+
+MP4 必须提供本地 PNG/JPEG 封面。媒体采用顶层矩形、匹配宽高比；旋转、裁剪、圆角、透明度或覆盖在媒体上的文字属于受限样式，会触发诊断。HTML 自动播放/静音/循环不自动映射到 PPTX。目标应用的编解码器、放映模式和版本会影响播放；本项目的封装验证不等于 PowerPoint/WPS 实际播放认证。
+
+```sh
+node src/cli.js dev examples/media --port 4174
+node src/cli.js export examples/media --format pdf,pptx
+node src/cli.js verify examples/media
+```
+
+更多规则见 Skill 的 `references/engine.md` 媒体章节。当前导出引擎无需 ffmpeg。

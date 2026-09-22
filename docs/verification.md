@@ -20,3 +20,13 @@ Environment: macOS arm64, Node v22.23.2, locked Playwright Chromium.
 
 ## Scope of certainty
 `verify` is structural/integrity verification, not OCR, factual validation, full visual comparison or an application compatibility certification. Custom projects still need visual inspection, especially unusual fonts, intentional overlap, filters and user-managed animations.
+
+## v0.2 media embedding
+
+- 27 automated tests pass, including 9 media-specific integration/regression cases.
+- MP4 and GIF original bytes, native relationships, poster hashes, object count and positions verified in actual PPTX packages.
+- GIF static screenshots match across repeated builds; a transparent GIF background pixel regression checks preservation of element CSS color without baking frame zero underneath.
+- Reviewer reproduced pointer-events:none foregrounds, transparent CSS backgrounds, ancestor rounded clipping, and animated video posters; all four are fixed and regression-tested. The last two original repros were independently rechecked after fixes.
+- Actual media-example PNG and rasterized vector PDF inspected. Media fixtures are synthetic, locally generated with ffmpeg/Pillow; these tools are not export runtime dependencies.
+- Installed Skill updated after comparing installed files with the prior Git baseline and backing them up outside the Skill directory.
+- Native Office application playback has not been tested; MP4 codec/GIF playback support remains target-application dependent.

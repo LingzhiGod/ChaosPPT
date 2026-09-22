@@ -4,7 +4,7 @@ import { initProject } from "./project.js";
 import { startServer } from "./server.js";
 import { inspectProject, buildProject } from "./renderer.js";
 import { verifyProject } from "./verify.js";
-const help = `ChaosPPT 0.1.0 — HTML presentation engine
+const help = `ChaosPPT 0.2.0 — HTML presentation engine
 
 Usage: chaosppt <command> <project-dir> [options]
 

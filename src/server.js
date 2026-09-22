@@ -30,6 +30,7 @@ const mime = {
   ".otf": "font/otf",
   ".csv": "text/csv",
   ".mp4": "video/mp4",
+  ".gif": "image/gif",
 };
 export async function projectFingerprint(root) {
   const hash = createHash("sha256");

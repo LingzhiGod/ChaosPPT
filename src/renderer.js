@@ -15,6 +15,7 @@ import { PDFDocument } from "pdf-lib";
 import pptxgen from "pptxgenjs";
 import { loadProject } from "./project.js";
 import { startServer, projectFingerprint } from "./server.js";
+import { prepareMedia, captureMedia, captureBackground } from "./media.js";
 import { inspectDOM } from "./diagnostics.js";
 import { verifyDirectory } from "./verify.js";
 const sha = (buffer) => createHash("sha256").update(buffer).digest("hex");
@@ -106,6 +107,7 @@ export async function visitSlides(root, { ids, scale, onPage } = {}) {
         issues: [],
       };
       let ready = false;
+      let media = [];
       try {
         await withDeadline(
           (async () => {
@@ -125,6 +127,10 @@ export async function visitSlides(root, { ids, scale, onPage } = {}) {
                   : "ASYNC_TASK_FAILED",
                 failure,
               );
+            const preparedMedia = await prepareMedia(page, root);
+            media = preparedMedia.media;
+            for (const item of preparedMedia.issues)
+              issues.push({ ...item, slideId: slide.id });
             // Tasks can trigger CSS background requests after the load event. Drain these too.
             let quietSince = Date.now();
             while (inflight.size || Date.now() - quietSince < 120) {
@@ -145,7 +151,7 @@ export async function visitSlides(root, { ids, scale, onPage } = {}) {
         );
         if (onPage)
           await withDeadline(
-            onPage({ page, slide, manifest: d, report, issues }),
+            onPage({ page, slide, manifest: d, report, issues, media }),
             d.render.timeoutMs * 2,
             "CAPTURE_TIMEOUT",
           );
@@ -236,7 +242,7 @@ export async function buildProject(
     const result = await visitSlides(root, {
       ids,
       scale,
-      onPage: async ({ page, slide, manifest: d, report, issues }) => {
+      onPage: async ({ page, slide, manifest: d, report, issues, media }) => {
         const index = images.length + 1,
           name = `slides/${String(index).padStart(3, "0")}-${slide.id}.png`;
         // Screen media keeps PDF layout consistent with screenshot; @page still sets physical size.
@@ -247,7 +253,20 @@ export async function buildProject(
           timeout: d.render.timeoutMs,
         });
         await writeFile(path.join(temp, name), png);
+        const capturedMedia = await captureMedia(page, media, temp, slide.id);
+        let background;
+        if (media.length) {
+          const bg = await captureBackground(page, media, {
+            type: "png",
+            clip: { x: 0, y: 0, width: d.size.width, height: d.size.height },
+            timeout: d.render.timeoutMs,
+          });
+          const file = `slides/${String(index).padStart(3, "0")}-${slide.id}-background.png`;
+          await writeFile(path.join(temp, file), bg);
+          background = { file, sha256: sha(bg) };
+        }
         images.push({
+          ...(background ? { background, media: capturedMedia } : {}),
           id: slide.id,
           file: name,
           sha256: sha(png),
@@ -322,13 +341,41 @@ export async function buildProject(
       for (const image of images) {
         const s = pptx.addSlide();
         s.addImage({
-          path: path.join(temp, image.file),
+          path: path.join(temp, image.background?.file || image.file),
           x: 0,
           y: 0,
           w: d.size.width / 96,
           h: d.size.height / 96,
           altText: image.id,
         });
+        for (const m of image.media || []) {
+          const b = m.bounds,
+            position = {
+              x: b.x / 96,
+              y: b.y / 96,
+              w: b.width / 96,
+              h: b.height / 96,
+              objectName: m.objectName,
+            };
+          if (m.kind === "mp4")
+            s.addMedia({
+              ...position,
+              type: "video",
+              path: path.join(temp, m.file),
+              extn: "mp4",
+              cover:
+                "image/png;base64," +
+                (await readFile(path.join(temp, m.poster.file))).toString(
+                  "base64",
+                ),
+            });
+          else
+            s.addImage({
+              ...position,
+              path: path.join(temp, m.file),
+              altText: m.elementId || "Animated GIF",
+            });
+        }
         s.addNotes(
           [
             image.notes,
@@ -352,7 +399,7 @@ export async function buildProject(
     );
     const build = {
       version: 1,
-      engine: "0.1.0",
+      engine: "0.2.0",
       sourceFingerprint: fingerprint,
       createdAt: new Date().toISOString(),
       size: project.manifest.size,

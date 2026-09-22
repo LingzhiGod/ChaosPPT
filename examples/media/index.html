@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <style>
+      :root {
+        --bg: #102c25;
+        --fg: #f3f2e9;
+        --muted: #b0c5b7;
+      }
+      h1 {
+        font-size: 72px;
+        margin-top: 28px;
+        margin-bottom: 30px;
+      }
+      .intro {
+        font-size: 28px;
+        color: #b0c5b7;
+      }
+      .media-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 56px;
+        margin-top: 45px;
+      }
+      .label {
+        font-size: 18px;
+        letter-spacing: 3px;
+        color: #c5fa73;
+        margin-bottom: 20px;
+      }
+      .media-row video,
+      .media-row img {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16/9;
+        object-fit: fill;
+      }
+      .note {
+        font-size: 22px;
+        color: #b0c5b7;
+        margin-top: 24px;
+      }
+      .footer {
+        color: #b0c5b7;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="slide">
+      <span class="eyebrow">CHAOSPPT / NATIVE MEDIA</span>
+      <h1>让演示动起来</h1>
+      <p class="intro">网页中播放 · PPTX 内嵌原文件 · PDF 保留静态画面</p>
+      <div class="media-row">
+        <div>
+          <p class="label">01 / MP4 VIDEO</p>
+          <video
+            data-pptx-media
+            data-element-id="video"
+            src="assets/clip.mp4"
+            poster="assets/poster.png"
+            controls
+            preload="metadata"
+          ></video>
+          <p class="note">原生视频对象，携带封面与本地 MP4</p>
+        </div>
+        <div>
+          <p class="label">02 / ANIMATED GIF</p>
+          <img
+            data-pptx-media
+            data-element-id="gif"
+            src="assets/animation.gif"
+            alt="动画测试图"
+          />
+          <p class="note">保留 GIF 帧与循环信息，静态输出取首帧</p>
+        </div>
+      </div>
+      <footer class="footer">
+        <span>本地合成素材 · 不依赖在线媒体服务</span><span>1 / 1</span>
+      </footer>
+    </section>
+  </body>
+</html>

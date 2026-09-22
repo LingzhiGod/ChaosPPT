@@ -18,18 +18,40 @@ export async function verifyDirectory(directory) {
     "build contains diagnostics errors or unsupported metadata",
   );
   check(build.slides.length > 0, "empty build");
-  for (const s of build.slides) {
-    const b = await readFile(await safeFile(directory, s.file));
-    check(sha(b) === s.sha256, `PNG hash ${s.id}`);
-    check(
-      b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
-      `PNG signature ${s.id}`,
-    );
-    check(
-      Math.abs(b.readUInt32BE(16) - build.size.width * build.scale) <= 1 &&
-        Math.abs(b.readUInt32BE(20) - build.size.height * build.scale) <= 1,
-      `PNG dimensions ${s.id}`,
-    );
+  for (const slide of build.slides) {
+    for (const m of slide.media || []) {
+      check(["mp4", "gif"].includes(m.kind), "media kind");
+      const b = m.bounds;
+      check(
+        [b.x, b.y, b.width, b.height].every(Number.isFinite) &&
+          b.x >= 0 &&
+          b.y >= 0 &&
+          b.width > 0 &&
+          b.height > 0 &&
+          b.x + b.width <= build.size.width + 0.5 &&
+          b.y + b.height <= build.size.height + 0.5,
+        "media bounds",
+      );
+      for (const asset of [m, m.poster])
+        check(
+          sha(await readFile(await safeFile(directory, asset.file))) ===
+            asset.sha256,
+          `Media hash ${asset.file}`,
+        );
+    }
+    for (const s of [slide, ...(slide.background ? [slide.background] : [])]) {
+      const b = await readFile(await safeFile(directory, s.file));
+      check(sha(b) === s.sha256, `PNG hash ${s.id}`);
+      check(
+        b.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+        `PNG signature ${s.id}`,
+      );
+      check(
+        Math.abs(b.readUInt32BE(16) - build.size.width * build.scale) <= 1 &&
+          Math.abs(b.readUInt32BE(20) - build.size.height * build.scale) <= 1,
+        `PNG dimensions ${s.id}`,
+      );
+    }
   }
   for (const artifact of build.artifacts) {
     const b = await readFile(await safeFile(directory, artifact.file));
@@ -92,9 +114,71 @@ export async function verifyDirectory(directory) {
         );
         check(!!zip[imagePath], "Image media");
         check(
-          sha(zip[imagePath]) === build.slides[i].sha256,
+          sha(zip[imagePath]) ===
+            (build.slides[i].background || build.slides[i]).sha256,
           `PPTX image/order at page ${i + 1}`,
         );
+        const pics = [...xml.matchAll(/<p:pic>[\s\S]*?<\/p:pic>/g)].map(
+          (m) => m[0],
+        );
+        const expected = build.slides[i].media || [];
+        check(pics.length === expected.length + 1, "PPTX media object count");
+        const relationXml = text(relPath);
+        const readRelation = (rid) => {
+          const matches = [
+            ...relationXml.matchAll(
+              /<Relationship\b[^>]*Id="([^"]+)"[^>]*Target="([^"]+)"[^>]*\/?\s*>/g,
+            ),
+          ];
+          const r = matches.find((m) => m[1] === rid);
+          check(
+            !!r && !r[0].includes('TargetMode="External"'),
+            "Embedded media relationship",
+          );
+          const target = path.posix.normalize(
+            path.posix.join(path.posix.dirname(slidePath), r[2]),
+          );
+          check(!!zip[target], "Embedded media file");
+          return zip[target];
+        };
+        for (const m of expected) {
+          const pic = pics.find((p) => p.includes(`name="${m.objectName}"`));
+          check(!!pic, "Native media object");
+          const off = pic.match(/<a:off x="(-?\d+)" y="(-?\d+)"/),
+            ext = pic.match(/<a:ext cx="(\d+)" cy="(\d+)"/);
+          check(!!off && !!ext, "Media geometry");
+          [m.bounds.x, m.bounds.y, m.bounds.width, m.bounds.height].forEach(
+            (v, j) =>
+              check(
+                Math.abs(
+                  Number([off[1], off[2], ext[1], ext[2]][j]) -
+                    Math.round(v * 9525),
+                ) <= 1,
+                "Native media placement",
+              ),
+          );
+          const imageId = pic.match(/<a:blip[^>]*r:embed="([^"]+)"/)?.[1];
+          check(!!imageId, "Media cover/image");
+          if (m.kind === "gif")
+            check(
+              sha(readRelation(imageId)) === m.sha256,
+              "GIF original bytes",
+            );
+          else {
+            const videoId = pic.match(/<a:videoFile[^>]*r:link="([^"]+)"/)?.[1],
+              nativeId = pic.match(/<p14:media[^>]*r:embed="([^"]+)"/)?.[1];
+            check(!!videoId && !!nativeId, "MP4 native playback links");
+            check(
+              sha(readRelation(videoId)) === m.sha256 &&
+                sha(readRelation(nativeId)) === m.sha256,
+              "MP4 original bytes",
+            );
+            check(
+              sha(readRelation(imageId)) === m.poster.sha256,
+              "MP4 poster bytes",
+            );
+          }
+        }
         check(
           xml.includes(`<a:off x="0" y="0"/>`) &&
             xml.includes(`<a:ext cx="${size[1]}" cy="${size[2]}"/>`),
@@ -112,6 +196,7 @@ export async function verifyDirectory(directory) {
       "artifact hashes",
       "PDF page count and dimensions",
       "PPTX page order, embedded image hashes and placement",
+      "MP4/GIF original bytes, relationships, posters and placement",
     ],
   };
 }

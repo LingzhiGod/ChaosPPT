@@ -1,0 +1,1 @@
+{"version":1,"title":"MP4 / GIF 原生嵌入","size":{"width":1600,"height":900},"render":{"timeoutMs":20000,"scale":2},"slides":[{"id":"media","file":"index.html","title":"让演示动起来","notes":"MP4 与 GIF 均为本地生成的测试素材；PPTX 原生嵌入，PDF 静态。"}]}

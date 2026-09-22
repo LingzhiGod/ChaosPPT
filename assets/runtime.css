@@ -115,3 +115,7 @@ img {
     print-color-adjust: exact;
   }
 }
+/* Explicitly embedded media uses the same rectangular fill in HTML and PPTX. */
+video[data-pptx-media] {
+  object-fit: fill;
+}

@@ -1,4 +1,4 @@
-# Engine reference — v0.1
+# Engine reference — v0.2
 
 ## Invocation
 
@@ -97,7 +97,7 @@ dist/
 
 Each successful render/export replaces the entire engine-owned dist; rendering PNGs after exporting removes the old exports. Keep delivery builds separate or export again as the final command. An existing dist without the ownership marker is protected. A per-project lock prevents concurrent builders.
 
-`verify` checks source fingerprint, PNG hashes/dimensions, artifact hashes, PDF page count/size, PPTX slide order, embedded image hashes and full-page placement. It does not open PowerPoint or compare rasterized PDF pixels. `partial: true` indicates a selected-page build. Notes and source strings are written into PPTX notes; metadata does not automatically add visible citations to page content.
+`verify` checks source fingerprint, PNG hashes/dimensions, artifact hashes, PDF page count/size, PPTX slide order, embedded image hashes and full-page placement, plus native media bytes/relationships/posters/geometry. It does not open PowerPoint or compare rasterized PDF pixels. `partial: true` indicates a selected-page build. Notes and source strings are written into PPTX notes; metadata does not automatically add visible citations to page content.
 
 ## Runtime boundary
 
@@ -113,3 +113,30 @@ pdftoppm -scale-to 1600 -png PROJECT/dist/deck.pdf /tmp/chaosppt-pdf-review/page
 ```
 
 Use an available image viewer to inspect all pages against the PNGs at a comparable scale. This optional QA tool is not bundled with the Node engine. Put QA images outside the deck project, otherwise creating them changes the source fingerprint. If a browser-print effect differs from the screenshot, use `--pdf-mode raster` for image fidelity, and verify/review the new final export again.
+
+
+## Native MP4 / animated GIF embedding (v0.2)
+
+Opt in with a boolean HTML attribute. Unmarked elements keep their existing flattened behavior.
+
+```html
+<video data-pptx-media data-element-id="demo-video"
+  src="../assets/demo.mp4" poster="../assets/poster.png"
+  controls preload="metadata"
+  style="width:640px;height:360px;object-fit:fill"></video>
+
+<img data-pptx-media data-element-id="process-gif"
+  src="../assets/process.gif" alt="Process animation"
+  style="width:640px;height:360px;object-fit:fill">
+```
+
+- Use local project MP4/GIF files. `<video><source src="...mp4"></video>` is also supported. Remote URLs, blob/data sources and other media extensions are rejected for native embedding, even when allowRemote is enabled.
+- MP4 requires a local `poster` image; this avoids relying on a decoded random video frame. Poster assets must be PNG/JPEG; their first frame is rasterized too, so an APNG poster is deterministic. Match media dimensions/aspect ratio to avoid stretching. MP4 bytes are preserved, not transcoded; playback codec support depends on the receiving presentation app.
+- GIF bytes, frames, transparency and loop metadata are preserved in PPTX. PDF/PNG freeze the first GIF frame using Chromium ImageDecoder. MP4 uses the poster in static outputs.
+- Native overlays require plain, topmost rectangles: square corners, object-fit:fill, no padding/border on the media itself, no transformed/filtered/masked/translucent ancestors, no clipping or foreground captions over media. Put decorative frames and captions in separate surrounding containers. Unsupported styling is diagnosed instead of silently approximated. The occlusion checks are geometric heuristics; inspect complex layering manually.
+- The PPTX background excludes the static media pixels but preserves the underlying CSS background. This prevents a GIF's frozen first frame leaking through later transparent frames.
+- Browser controls/autoplay/muted/loop attributes govern HTML preview only. Native MP4 uses the presentation app's playback controls; autoplay, audio settings and loop are not mapped from HTML. GIF animation is a slideshow-view capability and varies across apps/versions; edit view may display one frame.
+- A PPTX contains the actual local media, not a network link. No separate video files are needed by its recipient. `dist/media/` stores source bytes and captured posters for verification; build.json records each media object's geometry and hash plus a separate slide background.
+- `verify` checks embedded MP4/GIF and poster hashes, native relationships, object counts and positions. It is not a native PowerPoint/WPS playback test. Confirm playback in the target app before an important presentation.
+
+Runnable repository example: `examples/media`. Its synthetic fixtures were generated locally with ffmpeg; ffmpeg is not required by the export engine.

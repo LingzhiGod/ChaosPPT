@@ -1,6 +1,6 @@
 {
   "name": "chaosppt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Agent-first HTML presentation renderer with PDF and image-PPTX export",
   "type": "module",
   "bin": {
