@@ -1,5 +1,7 @@
 # Engine reference — v0.2
 
+Visible slide text follows the built-in [copy rules](copy-style.md), including master footers and chart labels. Production TODOs belong in `notes` or the handoff; sources and audience-relevant data labels retain their factual role. The renderer does not remove text by keyword.
+
 ## Invocation
 
 Replace `RUNNER` below with the absolute path of this skill's `scripts/run.mjs`; `PROJECT` is the deck directory, not the engine repository. Quote paths with spaces.
