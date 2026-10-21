@@ -26,3 +26,16 @@ An independent forward test used the updated Skill for three requests:
 - Synthetic quarterly chart: one synthetic-data label, correct Q1–Q4 data and 32% Q1-to-Q4 growth, no repeated defensive footer.
 
 Skill frontmatter validation passed. A fresh project initialized from the updated starter rendered its evidence page with zero errors and zero warnings. This checks authoring behavior and template layout; the renderer does not perform semantic copy enforcement or keyword deletion.
+
+## 2026-10-22: shared visual system and general design principles
+
+A baseline agent planned a six-page operating review using the previous Skill. Its choices were sensible, but it identified chart prerequisites, semantic color mappings, scales, missing values and whole-deck theme details as decisions left to its own judgment. The new rules make these reusable decisions explicit in the Skill entrypoint and its required design reference.
+
+The update covers a shared CSS/master visual system, theme variants, hierarchy/alignment/proximity/contrast/whitespace, readability, sixteen task-based visual choices, truthful data encodings and both slide-level and sequence-level review. User brands and concrete themes remain project choices.
+
+An independent forward test read the revised Skill and references and completed two planning tasks:
+
+- Six-page operating review: shared blue/teal theme and a coordinated dark conclusion; trends with a missing-month gap and negative values; ranked regional bars; 100% channel composition; paired-observation scatter without causal claims; a precise budget table; and ordered conversion bars with correct denominators and a 16% overall conversion rate. The review plan included semantic colors, common scales, legibility, source checks and whole-deck comparison.
+- Unsupported visual requests: a mean alone remained a key number rather than an invented box plot; overlapping channels without a total became independent counts instead of a part-to-whole chart; decorative error bars were omitted. Material collection tasks stayed in notes while audience-relevant counting scope remained visible.
+
+No substantive conflict between the design and copy rules was found. These were independent design-planning evaluations, not rendered presentation or engine regression tests. Frontmatter validation and local-reference resolution passed for repository and installed Skill. Runtime and renderer files were unchanged.

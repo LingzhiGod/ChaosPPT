@@ -1,5 +1,7 @@
 # Engine reference — v0.2
 
+Deck planning and visual review follow the built-in [design principles](design-principles.md): shared theme/masters, stable semantic encodings, task-based chart selection and whole-deck review. These guide Agent decisions and do not add automatic design checks to the renderer.
+
 Visible slide text follows the built-in [copy rules](copy-style.md), including master footers and chart labels. Production TODOs belong in `notes` or the handoff; sources and audience-relevant data labels retain their factual role. The renderer does not remove text by keyword.
 
 ## Invocation
