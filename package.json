@@ -20,7 +20,8 @@
     "templates",
     "skills",
     "README.md",
-    "scripts"
+    "scripts",
+    "CHANGELOG.md"
   ],
   "dependencies": {
     "@xmldom/xmldom": "^0.9.12",
