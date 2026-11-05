@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
 import { unzipSync, strFromU8 } from "fflate";
 import { safeFile, loadProject } from "./project.js";
+import { verifyEditableSlide } from "./editable/verify.js";
 import { projectFingerprint } from "./server.js";
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 const check = (condition, message) => {
@@ -18,6 +19,21 @@ export async function verifyDirectory(directory) {
     "build contains diagnostics errors or unsupported metadata",
   );
   check(build.slides.length > 0, "empty build");
+  check(
+    ["compatible", "editable"].includes(build.pptxMode || "compatible"),
+    "PPTX mode",
+  );
+  if (build.conversion) {
+    const bytes = await readFile(
+      await safeFile(directory, build.conversion.file),
+    );
+    check(sha(bytes) === build.conversion.sha256, "conversion report hash");
+  }
+  if (
+    build.pptxMode === "editable" &&
+    build.artifacts.some((a) => a.format === "pptx")
+  )
+    check(!!build.conversion, "editable conversion report");
   for (const slide of build.slides) {
     for (const m of slide.media || []) {
       check(["mp4", "gif"].includes(m.kind), "media kind");
@@ -96,6 +112,22 @@ export async function verifyDirectory(directory) {
             "ppt/" + relations.get(order[i]),
           ),
           xml = text(slidePath);
+        if (build.pptxMode === "editable") {
+          const relPath = path.posix.join(
+            path.posix.dirname(slidePath),
+            "_rels",
+            path.posix.basename(slidePath) + ".rels",
+          );
+          await verifyEditableSlide({
+            directory,
+            slide: build.slides[i],
+            xml,
+            zip,
+            slidePath,
+            relXml: text(relPath),
+          });
+          continue;
+        }
         const embed = xml.match(/<a:blip[^>]*r:embed="([^"]+)"/);
         check(!!embed, "Slide image");
         const relPath = path.posix.join(
@@ -197,6 +229,9 @@ export async function verifyDirectory(directory) {
       "PDF page count and dimensions",
       "PPTX page order, embedded image hashes and placement",
       "MP4/GIF original bytes, relationships, posters and placement",
+      ...(build.pptxMode === "editable"
+        ? ["native scene hashes, object order/types/positions and text content"]
+        : []),
     ],
   };
 }

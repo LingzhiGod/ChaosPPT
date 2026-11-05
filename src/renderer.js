@@ -17,6 +17,9 @@ import { loadProject } from "./project.js";
 import { startServer, projectFingerprint } from "./server.js";
 import { prepareMedia, captureMedia, captureBackground } from "./media.js";
 import { inspectDOM } from "./diagnostics.js";
+import { captureEditableScene } from "./editable/capture.js";
+import { finalizeEditablePackage } from "./editable/package.js";
+import { writeEditableScene } from "./editable/write.js";
 import { verifyDirectory } from "./verify.js";
 const sha = (buffer) => createHash("sha256").update(buffer).digest("hex");
 function withDeadline(promise, ms, message) {
@@ -213,12 +216,20 @@ async function publish(root, temp) {
 }
 export async function buildProject(
   root,
-  { formats = [], pdfMode = "vector", ids, scale } = {},
+  {
+    formats = [],
+    pdfMode = "vector",
+    pptxMode = "compatible",
+    ids,
+    scale,
+  } = {},
 ) {
   if (formats.some((f) => !["pdf", "pptx"].includes(f)))
     throw new Error("Supported export formats: pdf,pptx");
   if (!["vector", "raster"].includes(pdfMode))
     throw new Error("PDF mode must be vector or raster");
+  if (!["compatible", "editable"].includes(pptxMode))
+    throw new Error("PPTX mode must be compatible or editable");
   const project = await loadProject(root);
   root = project.root;
   const lockPath = path.join(root, ".chaosppt-build.lock");
@@ -239,6 +250,8 @@ export async function buildProject(
     pdf.setTitle(project.manifest.title);
     pdf.setCreator("ChaosPPT");
     const images = [];
+    const scenes = new Map();
+    const conversion = { version: 1, mode: pptxMode, slides: [] };
     const result = await visitSlides(root, {
       ids,
       scale,
@@ -305,6 +318,22 @@ export async function buildProject(
             });
           }
         }
+        if (
+          formats.includes("pptx") &&
+          pptxMode === "editable" &&
+          !report.issues.some((i) => i.severity === "error") &&
+          !issues.some((i) => i.severity === "error")
+        ) {
+          const exported = await captureEditableScene(
+            page,
+            media,
+            temp,
+            slide.id,
+          );
+          scenes.set(slide.id, exported.scene);
+          images.at(-1).editable = exported.receipt;
+          conversion.slides.push(exported.summary);
+        }
       },
     });
     const { project: _, ...report } = result;
@@ -340,14 +369,17 @@ export async function buildProject(
       pptx.lang = "zh-CN";
       for (const image of images) {
         const s = pptx.addSlide();
-        s.addImage({
-          path: path.join(temp, image.background?.file || image.file),
-          x: 0,
-          y: 0,
-          w: d.size.width / 96,
-          h: d.size.height / 96,
-          altText: image.id,
-        });
+        if (pptxMode === "editable")
+          writeEditableScene(s, scenes.get(image.id), temp);
+        else
+          s.addImage({
+            path: path.join(temp, image.background?.file || image.file),
+            x: 0,
+            y: 0,
+            w: d.size.width / 96,
+            h: d.size.height / 96,
+            altText: image.id,
+          });
         for (const m of image.media || []) {
           const b = m.bounds,
             position = {
@@ -387,6 +419,8 @@ export async function buildProject(
         fileName: path.join(temp, "deck.pptx"),
         compression: true,
       });
+      if (pptxMode === "editable")
+        await finalizeEditablePackage(path.join(temp, "deck.pptx"));
       artifacts.push({
         file: "deck.pptx",
         format: "pptx",
@@ -397,14 +431,22 @@ export async function buildProject(
       path.join(temp, "report.json"),
       JSON.stringify(report, null, 2),
     );
+    let conversionAsset;
+    if (formats.includes("pptx") && pptxMode === "editable") {
+      const bytes = Buffer.from(JSON.stringify(conversion, null, 2));
+      await writeFile(path.join(temp, "conversion.json"), bytes);
+      conversionAsset = { file: "conversion.json", sha256: sha(bytes) };
+    }
     const build = {
       version: 1,
-      engine: "0.2.0",
+      engine: "0.3.0",
       sourceFingerprint: fingerprint,
       createdAt: new Date().toISOString(),
       size: project.manifest.size,
       scale: scale ?? project.manifest.render.scale,
       pdfMode,
+      pptxMode,
+      ...(conversionAsset ? { conversion: conversionAsset } : {}),
       ok: report.ok,
       slides: images.map(({ notes, sources, ...image }) => image),
       artifacts,
@@ -423,6 +465,10 @@ export async function buildProject(
     return {
       ...report,
       output: out,
+      pptxMode,
+      ...(conversionAsset
+        ? { conversionReport: path.join(out, conversionAsset.file) }
+        : {}),
       artifacts: artifacts.map((a) => path.join(out, a.file)),
       images: images.map((i) => path.join(out, i.file)),
     };

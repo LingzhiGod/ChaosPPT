@@ -1,4 +1,4 @@
-# Engine reference — v0.2
+# Engine reference — v0.3
 
 Deck planning and visual review follow the built-in [design principles](design-principles.md): shared theme/masters, stable semantic encodings, task-based chart selection and whole-deck review. These guide Agent decisions and do not add automatic design checks to the renderer.
 
@@ -144,3 +144,28 @@ Opt in with a boolean HTML attribute. Unmarked elements keep their existing flat
 - `verify` checks embedded MP4/GIF and poster hashes, native relationships, object counts and positions. It is not a native PowerPoint/WPS playback test. Confirm playback in the target app before an important presentation.
 
 Runnable repository example: `examples/media`. Its synthetic fixtures were generated locally with ffmpeg; ffmpeg is not required by the export engine.
+
+
+## PPTX export modes (v0.3)
+
+```sh
+node RUNNER export PROJECT --format pdf,pptx --pptx-mode compatible
+node RUNNER export PROJECT --format pdf,pptx --pptx-mode editable
+```
+
+`compatible` is the unchanged default: a browser-rendered full-page image (with marked native media on top). It is the preferred visual-fidelity route. `editable` is an opt-in hybrid route. Both preserve the same reference PNG/PDF capture and native MP4/GIF behavior. The mode is a CLI export option, not a deck.json field. Each successful build replaces dist, so copy completed outputs outside the project before building another mode.
+
+Editable mappings:
+- Visible text becomes native text boxes using measured visual lines/runs; bold, italic, color, font size, tracking and basic decorations are mapped. Mixed formatting and wrapped paragraphs can become multiple text boxes. Reflow, semantic paragraph structure, hyperlinks and accessibility semantics are not reconstructed.
+- Solid backgrounds, rectangles, uniform rounded cards, solid borders and simple lines become native shapes. Flex/Grid is resolved by the browser to fixed positions, not exported as responsive layout rules.
+- Ordinary `<img>` becomes a separately movable/resizable/replaceable picture using its browser-rendered pixels. Cropping is baked into those pixels, so this is not recovery of original image regions beyond the visible crop.
+- SVG/Canvas, tables, list markers, CSS gradients/shadows/filters, custom components and unsupported layouts fall back to isolated transparent raster layers. They are not reported as native geometry/data charts/tables. Complex nested stacking and backdrop-dependent effects may require a larger subtree or whole-page fallback.
+- Set `data-pptx-export="raster"` on a container to explicitly preserve that subtree as an image. This is an export hint, not a way to suppress ordinary overflow/resource diagnostics.
+
+Inspect `dist/conversion.json`: per-page text/shape/image/fallback/media counts, required fonts, native DOM-text character counts, rasterized DOM-text counts, and every fallback's source ID/reason. Add `data-element-id` to meaningful content so these reports are actionable. DOM-text statistics exclude lettering inside images/Canvas and are NOT an overall editability or visual-fidelity percentage. Fallbacks are expected nonblocking outcomes in this mode.
+
+`dist/editable/` holds the scene JSON and captured assets; build.json records their hashes. `verify` additionally parses actual PPTX objects and checks scene hashes, object order/types/positions, text content/font size, image bytes and native media links. It is structural verification, not a pixel-diff or semantic understanding test.
+
+Fonts are NOT embedded in editable PPTX. Install the reported font families on the target presentation machine; otherwise substitution, changed spacing or missing glyphs can occur. The bundled example font may be loaded by HTML without being installed for Office. Inspect native PPTX with the same fonts available. PNG/PDF remain useful browser references, not evidence that the native PPTX looks identical. Use compatible mode when appearance takes priority.
+
+Repository showcase: `examples/editable`. This release adds native text/basic shapes/pictures; native data charts/tables, SVG path editing, automatic font embedding and native transitions remain separate future features.

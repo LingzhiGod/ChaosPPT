@@ -4,7 +4,7 @@ import { initProject } from "./project.js";
 import { startServer } from "./server.js";
 import { inspectProject, buildProject } from "./renderer.js";
 import { verifyProject } from "./verify.js";
-const help = `ChaosPPT 0.2.0 — HTML presentation engine
+const help = `ChaosPPT 0.3.0 — HTML presentation engine
 
 Usage: chaosppt <command> <project-dir> [options]
 
@@ -12,7 +12,7 @@ Usage: chaosppt <command> <project-dir> [options]
   dev        Local preview with keyboard navigation and live reload
   inspect    Diagnose all slides without writing artifacts
   render     Render PNGs and report to <project>/dist
-  export     Export PNGs plus PDF and/or image-based PPTX to dist
+  export     Export PNGs plus PDF and/or compatible/editable PPTX to dist
   verify     Check current source fingerprint and generated artifacts
 
 Options:
@@ -20,6 +20,7 @@ Options:
   --slides id1,id2       Select pages for inspect/render in manifest order
   --scale 1..4           PNG pixel ratio for inspect/render/export
   --format pdf,pptx     Export formats (default: pdf,pptx)
+  --pptx-mode compatible  compatible (default) or editable (hybrid native objects)
   --pdf-mode vector     vector (default) or raster
   --port 4173           Dev server port (default: auto)
   --help                Show this help
@@ -38,6 +39,7 @@ try {
       scale: { type: "string" },
       format: { type: "string" },
       "pdf-mode": { type: "string" },
+      "pptx-mode": { type: "string" },
       port: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
@@ -54,7 +56,7 @@ try {
       dev: ["port"],
       inspect: ["slides", "scale"],
       render: ["slides", "scale"],
-      export: ["format", "pdf-mode", "scale"],
+      export: ["format", "pdf-mode", "pptx-mode", "scale"],
       verify: [],
     };
     if (!Object.hasOwn(allowed, command))
@@ -91,6 +93,7 @@ try {
       result = await buildProject(root, {
         formats: (v.format || "pdf,pptx").split(","),
         pdfMode: v["pdf-mode"] || "vector",
+        pptxMode: v["pptx-mode"] || "compatible",
         scale,
       });
     if (command === "verify") result = await verifyProject(root);

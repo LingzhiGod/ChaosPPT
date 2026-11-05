@@ -30,3 +30,15 @@ Environment: macOS arm64, Node v22.23.2, locked Playwright Chromium.
 - Actual media-example PNG and rasterized vector PDF inspected. Media fixtures are synthetic, locally generated with ffmpeg/Pillow; these tools are not export runtime dependencies.
 - Installed Skill updated after comparing installed files with the prior Git baseline and backing them up outside the Skill directory.
 - Native Office application playback has not been tested; MP4 codec/GIF playback support remains target-application dependent.
+
+## v0.3 editable export (2026-11-05)
+
+- Baseline v0.2: 27 tests passed. New full suite: 37 tests passed.
+- Compatible remains the default. Default/explicit-compatible output image hashes match for a deterministic test deck.
+- Editable tests inspect real DrawingML text, shapes, media object identity, placement and embedded raster assets. Corrupting scene receipts or native text (even after refreshing the outer PPTX hash) is detected.
+- Independent review identified and reproduced hidden/boxless visible descendants, backdrop blending, mixed direct-text/positioned-child paint order, and preserved tabs. All were corrected with conservative fallback and regression tests; the reviewer rechecked the fixes.
+- Demo and media decks exported in editable mode; the editable showcase exported and verified in both modes. Conversion receipts disclose text/shape/image/fallback counts and required fonts.
+- Actual editable PPTX was rendered through bundled LibreOffice. Initial rendering without CJK fonts exposed missing glyphs; rendering with the same Noto Sans SC family supplied through a temporary Fontconfig file retained Chinese text. Fonts are not embedded in PPTX and must be available on the recipient system.
+- Native text uses visual-line/run fragments, not full paragraph reflow. SVG/Canvas, charts/tables and complex styles are raster fallbacks. No claim of 95% editability, pixel-identical native typography, or native PowerPoint playback/compatibility certification.
+- Preserved the newer main-branch design-principles and audience-focused copy rules while integrating the export changes.
+- Final dependency audit identified a newly reported Zod advisory in 4.6.5; the locked dependency was upgraded to 4.6.6 and the subsequent audit reported zero known vulnerabilities. The unavailable local proxy was bypassed per-command without changing user proxy settings.
