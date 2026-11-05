@@ -1,6 +1,7 @@
 import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import { resolveSceneMotion } from "../motion/resolve.js";
 import { extractControls } from "./controls.js";
 import { extractScene } from "./extract.js";
 import { captureBackground } from "../media.js";
@@ -29,7 +30,7 @@ async function restore(page) {
       .forEach((e) => e.removeAttribute("data-chaosppt-capture-keep"));
   });
 }
-export async function captureEditableScene(page, media, temp, slideId) {
+export async function captureEditableScene(page, media, temp, slideId, motion) {
   const explicit = await page.evaluate(extractControls);
   if (explicit?.errors.length)
     throw new Error(explicit.errors.map((e) => e.message).join("; "));
@@ -160,6 +161,7 @@ export async function captureEditableScene(page, media, temp, slideId) {
       };
     }
   }
+  if (motion) scene.motion = resolveSceneMotion(scene, motion);
   const counts = {
     text: 0,
     richtext: 0,

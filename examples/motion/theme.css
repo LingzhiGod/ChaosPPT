@@ -1,0 +1,84 @@
+:root {
+  --font-body: "Noto Sans SC", sans-serif;
+  --bg: #f4f3eb;
+  --fg: #18352c;
+  --muted: #617168;
+  --safe: 72px;
+}
+h1 {
+  font-size: 64px;
+  line-height: 1.25;
+  letter-spacing: 0;
+  font-weight: 700;
+  margin: 20px 0 30px;
+}
+.kicker {
+  font-size: 20px;
+  color: #d96e42;
+  letter-spacing: 2px;
+}
+.lead {
+  font-size: 28px;
+  line-height: 1.5;
+  color: #617168;
+}
+.card {
+  position: absolute;
+  width: 640px;
+  height: 250px;
+}
+.card-bg {
+  position: absolute;
+  inset: 0;
+  background: #e4ebdc;
+  border: 1px solid #aabca4;
+  border-radius: 12px;
+}
+.card-title {
+  position: absolute;
+  left: 28px;
+  top: 28px;
+  width: 580px;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.card-body {
+  position: absolute;
+  left: 28px;
+  top: 100px;
+  width: 580px;
+  font-size: 28px;
+  line-height: 1.5;
+}
+.footer {
+  position: absolute;
+  left: 72px;
+  right: 72px;
+  bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  color: #617168;
+}
+.footer > div {
+  white-space: nowrap;
+}
+.bar {
+  position: absolute;
+  left: 840px;
+  height: 34px;
+  background: #4e78bd;
+  border-radius: 4px;
+}
+.label {
+  position: absolute;
+  font-size: 22px;
+  color: #617168;
+}
+.note {
+  position: absolute;
+  font-size: 24px;
+  color: #617168;
+  line-height: 1.5;
+}

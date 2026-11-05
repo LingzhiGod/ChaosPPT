@@ -2,6 +2,7 @@ import path from "node:path";
 import { readFile, realpath, stat, mkdir, readdir, cp } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import { normalizeTransition } from "./motion/contract.js";
 export const engineRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
@@ -29,6 +30,19 @@ const font = z
     sample: z.string().default("ABC中文123"),
   })
   .strict();
+const transition = z
+  .object({
+    effect: z.enum(["none", "fade", "morph"]),
+    durationMs: z.number().int().min(0).max(5000).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    try {
+      normalizeTransition(value);
+    } catch (e) {
+      ctx.addIssue({ code: "custom", message: e.message });
+    }
+  });
 const slide = z
   .object({
     id,
@@ -39,6 +53,7 @@ const slide = z
     sources: z.array(z.string()).default([]),
     notes: z.string().default(""),
     master: id.optional(),
+    transition: transition.optional(),
   })
   .strict();
 const schema = z

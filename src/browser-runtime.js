@@ -22,7 +22,23 @@
         throw new TypeError("Capture callback must be a function");
       captures.push(callback);
     },
+    async ready() {
+      await document.fonts.ready;
+      while (pending.size) await Promise.allSettled([...pending]);
+      for (const f of window.__CHAOSPPT_CONFIG__.fonts) {
+        const loaded = await document.fonts.load(
+          `${f.style} ${f.weight.split(/\s+/)[0]} 24px ${JSON.stringify(f.family)}`,
+          f.sample,
+        );
+        if (!loaded.length)
+          throw new Error("Preview font did not load: " + f.family);
+      }
+      await document.fonts.ready;
+      await Promise.all([...document.images].map((img) => img.decode()));
+      if (failures.length) throw new Error(failures.join("; "));
+    },
     async prepare() {
+      window.ChaosPPT.motion?.canonical();
       document.documentElement.setAttribute("data-chaosppt-capture", "");
       for (const a of document.getAnimations()) a.pause();
       for (const m of document.querySelectorAll("video,audio")) m.pause();

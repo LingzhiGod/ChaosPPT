@@ -96,6 +96,7 @@
         box-shadow: 0 24px 70px #0005;
         flex-shrink: 0;
         background: #f5f3ed;
+        overflow: hidden;
       }
       iframe {
         position: absolute;
@@ -104,7 +105,7 @@
         border: 0;
         transform-origin: top left;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: none;
       }
       iframe.visible {
         opacity: 1;
@@ -159,122 +160,9 @@
     <footer>
       <button id="prev" aria-label="上一页">←</button><span id="counter"></span
       ><button id="next" aria-label="下一页">→</button
-      ><button id="present">演示 / F</button
-      ><span id="status">← → 切换 · Home / End · 自动刷新</span>
+      ><button id="present">演示 / F</button><span id="motion-status"></span
+      ><span id="status">→ / 空格：动画步骤或翻页 · ←：上一页</span>
     </footer>
-    <script>
-      let deck,
-        index = 0,
-        revision = "",
-        frame;
-      const $ = (s) => document.querySelector(s),
-        holder = $("#holder"),
-        stage = $("#stage");
-      function fit() {
-        if (!deck) return;
-        const scale = Math.min(
-          (stage.clientWidth - 64) / deck.size.width,
-          (stage.clientHeight - 64) / deck.size.height,
-        );
-        holder.style.width = deck.size.width * scale + "px";
-        holder.style.height = deck.size.height * scale + "px";
-        if (frame) frame.style.transform = `scale(${scale})`;
-      }
-      function show(i) {
-        index = Math.max(0, Math.min(deck.slides.length - 1, i));
-        const s = deck.slides[index];
-        location.hash = s.id;
-        document
-          .querySelectorAll("nav button")
-          .forEach((b, j) => b.classList.toggle("active", j === index));
-        $("#counter").textContent = `${index + 1} / ${deck.slides.length}`;
-        const next = document.createElement("iframe");
-        next.title = s.title || s.id;
-        next.width = deck.size.width;
-        next.height = deck.size.height;
-        next.src = "/slide/" + s.id;
-        next.setAttribute("sandbox", "allow-scripts allow-same-origin");
-        next.onload = () => {
-          next.classList.add("visible");
-          try {
-            next.contentWindow.addEventListener("keydown", key);
-          } catch {}
-        };
-        frame?.remove();
-        holder.append(next);
-        frame = next;
-        fit();
-      }
-      async function load() {
-        const response = await fetch("/api/deck");
-        if (!response.ok) throw new Error(await response.text());
-        deck = await response.json();
-        $("#title").textContent = deck.title;
-        $("nav").replaceChildren();
-        deck.slides.forEach((s, i) => {
-          const b = document.createElement("button"),
-            n = document.createElement("small"),
-            t = document.createElement("span");
-          n.textContent = String(i + 1).padStart(2, "0");
-          t.textContent = s.title || s.id;
-          b.append(n, t);
-          b.onclick = () => show(i);
-          $("nav").append(b);
-        });
-        const requested = deck.slides.findIndex(
-          (s) => s.id === location.hash.slice(1),
-        );
-        show(requested >= 0 ? requested : index);
-        $("#error").style.display = "none";
-      }
-      function error(e) {
-        $("#error").textContent = e.message;
-        $("#error").style.display = "block";
-      }
-      function key(e) {
-        if (["ArrowRight", "PageDown", " "].includes(e.key)) {
-          e.preventDefault();
-          show(index + 1);
-        }
-        if (["ArrowLeft", "PageUp"].includes(e.key)) {
-          e.preventDefault();
-          show(index - 1);
-        }
-        if (e.key === "Home") show(0);
-        if (e.key === "End") show(deck.slides.length - 1);
-        if (e.key.toLowerCase() === "f") $("#present").click();
-      }
-      $("#next").onclick = () => show(index + 1);
-      $("#prev").onclick = () => show(index - 1);
-      $("#present").onclick = () => {
-        document.body.classList.toggle("present");
-        fit();
-      };
-      window.addEventListener("keydown", key);
-      new ResizeObserver(fit).observe(stage);
-      window.addEventListener("hashchange", () => {
-        const i = deck?.slides.findIndex(
-          (s) => s.id === location.hash.slice(1),
-        );
-        if (i >= 0 && i !== index) show(i);
-      });
-      load().catch(error);
-      let polling = false;
-      setInterval(async () => {
-        if (polling) return;
-        polling = true;
-        try {
-          const r = await fetch("/api/revision");
-          if (!r.ok) throw new Error(await r.text());
-          const data = await r.json();
-          if (revision && data.revision !== revision) await load();
-          revision = data.revision;
-        } catch (e) {
-          error(e);
-        } finally {
-          polling = false;
-        }
-      }, 1200);
-    </script>
+    <script type="module" src="/__engine/player.js"></script>
   </body>
 </html>

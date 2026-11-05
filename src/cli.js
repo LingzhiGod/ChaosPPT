@@ -4,7 +4,7 @@ import { initProject } from "./project.js";
 import { startServer } from "./server.js";
 import { inspectProject, buildProject } from "./renderer.js";
 import { verifyProject } from "./verify.js";
-const help = `ChaosPPT 0.4.0 — HTML presentation engine
+const help = `ChaosPPT 0.5.0 — HTML presentation engine
 
 Usage: chaosppt <command> <project-dir> [options]
 
@@ -20,6 +20,7 @@ Options:
   --slides id1,id2       Select pages for inspect/render in manifest order
   --scale 1..4           PNG pixel ratio for inspect/render/export
   --format pdf,pptx     Export formats (default: pdf,pptx)
+  --motion-mode native  native (default) or static; PDF/PNG always authored static layout
   --pptx-mode compatible  compatible (default) or editable (hybrid native objects)
   --pdf-mode vector     vector (default) or raster
   --port 4173           Dev server port (default: auto)
@@ -40,6 +41,7 @@ try {
       format: { type: "string" },
       "pdf-mode": { type: "string" },
       "pptx-mode": { type: "string" },
+      "motion-mode": { type: "string" },
       port: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
@@ -56,7 +58,7 @@ try {
       dev: ["port"],
       inspect: ["slides", "scale"],
       render: ["slides", "scale"],
-      export: ["format", "pdf-mode", "pptx-mode", "scale"],
+      export: ["format", "pdf-mode", "pptx-mode", "motion-mode", "scale"],
       verify: [],
     };
     if (!Object.hasOwn(allowed, command))
@@ -94,6 +96,7 @@ try {
         formats: (v.format || "pdf,pptx").split(","),
         pdfMode: v["pdf-mode"] || "vector",
         pptxMode: v["pptx-mode"] || "compatible",
+        motionMode: v["motion-mode"] || "native",
         scale,
       });
     if (command === "verify") result = await verifyProject(root);

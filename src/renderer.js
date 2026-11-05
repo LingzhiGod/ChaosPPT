@@ -21,6 +21,8 @@ import { extractControls } from "./editable/controls.js";
 import { captureEditableScene } from "./editable/capture.js";
 import { finalizeEditablePackage } from "./editable/package.js";
 import { writeEditableScene } from "./editable/write.js";
+import { validateMotionDeck } from "./motion/resolve.js";
+import { applyNativeMotion } from "./motion/pptx.js";
 import { verifyDirectory } from "./verify.js";
 const sha = (buffer) => createHash("sha256").update(buffer).digest("hex");
 function withDeadline(promise, ms, message) {
@@ -115,6 +117,7 @@ export async function visitSlides(
       };
       let ready = false;
       let media = [];
+      let motion;
       try {
         await withDeadline(
           (async () => {
@@ -156,6 +159,13 @@ export async function visitSlides(
               for (const i of controls?.errors || [])
                 issues.push({ ...i, slideId: slide.id });
             }
+            try {
+              motion = await page.evaluate(() =>
+                window.ChaosPPT.motion.collect(),
+              );
+            } catch (e) {
+              issue("MOTION_INVALID", e.message);
+            }
             ready = true;
           })(),
           d.render.timeoutMs,
@@ -163,7 +173,7 @@ export async function visitSlides(
         );
         if (onPage)
           await withDeadline(
-            onPage({ page, slide, manifest: d, report, issues, media }),
+            onPage({ page, slide, manifest: d, report, issues, media, motion }),
             d.render.timeoutMs * 2,
             "CAPTURE_TIMEOUT",
           );
@@ -178,9 +188,23 @@ export async function visitSlides(
         reports.push({
           ...report,
           ready,
+          ...(motion ? { motion } : {}),
           issues: [...report.issues, ...issues],
         });
         await context.close();
+      }
+    }
+    if (!ids && reports.every((r) => r.motion)) {
+      try {
+        validateMotionDeck(reports.map((r) => r.motion));
+      } catch (e) {
+        reports.at(-1).issues.push({
+          slideId: reports.at(-1).slideId,
+          elementId: null,
+          severity: "error",
+          code: "MOTION_INVALID",
+          message: e.message,
+        });
       }
     }
     return { project, ...summarize(reports) };
@@ -232,6 +256,7 @@ export async function buildProject(
     formats = [],
     pdfMode = "vector",
     pptxMode = "compatible",
+    motionMode = "native",
     ids,
     scale,
   } = {},
@@ -242,6 +267,8 @@ export async function buildProject(
     throw new Error("PDF mode must be vector or raster");
   if (!["compatible", "editable"].includes(pptxMode))
     throw new Error("PPTX mode must be compatible or editable");
+  if (!["native", "static"].includes(motionMode))
+    throw new Error("Motion mode must be native or static");
   const project = await loadProject(root);
   root = project.root;
   const lockPath = path.join(root, ".chaosppt-build.lock");
@@ -263,12 +290,46 @@ export async function buildProject(
     pdf.setCreator("ChaosPPT");
     const images = [];
     const scenes = new Map();
+    const requestedMotion = [],
+      effectiveMotion = [];
     const conversion = { version: 1, mode: pptxMode, slides: [] };
     const result = await visitSlides(root, {
       validateControls: pptxMode === "editable",
       ids,
       scale,
-      onPage: async ({ page, slide, manifest: d, report, issues, media }) => {
+      onPage: async ({
+        page,
+        slide,
+        manifest: d,
+        report,
+        issues,
+        media,
+        motion,
+      }) => {
+        if (motion) {
+          requestedMotion.push(motion);
+          const effective =
+            motionMode === "static"
+              ? {
+                  ...motion,
+                  events: [],
+                  shared: [],
+                  steps: 0,
+                  transition: { effect: "none", durationMs: 0 },
+                }
+              : motion;
+          if (
+            formats.includes("pptx") &&
+            pptxMode === "compatible" &&
+            (effective.events.length ||
+              effective.shared.length ||
+              effective.transition.effect === "morph")
+          )
+            throw new Error(
+              "Control animations/shared Morph require --pptx-mode editable, or explicit --motion-mode static",
+            );
+          effectiveMotion.push(effective);
+        }
         const index = images.length + 1,
           name = `slides/${String(index).padStart(3, "0")}-${slide.id}.png`;
         // Screen media keeps PDF layout consistent with screenshot; @page still sets physical size.
@@ -342,8 +403,10 @@ export async function buildProject(
             media,
             temp,
             slide.id,
+            effectiveMotion.at(-1),
           );
           scenes.set(slide.id, exported.scene);
+          effectiveMotion[effectiveMotion.length - 1] = exported.scene.motion;
           images.at(-1).editable = exported.receipt;
           conversion.slides.push(exported.summary);
         }
@@ -361,7 +424,14 @@ export async function buildProject(
       throw new Error(
         "Project changed during build; retry after saving all source files",
       );
+    const motionActive = requestedMotion.some(
+      (p) =>
+        p.events.length || p.shared.length || p.transition.effect !== "none",
+    );
+    if (motionMode === "native" && formats.includes("pptx"))
+      validateMotionDeck(effectiveMotion);
     const artifacts = [];
+    let motionReceipts;
     if (formats.includes("pdf")) {
       const bytes = await pdf.save();
       await writeFile(path.join(temp, "deck.pdf"), bytes);
@@ -437,6 +507,11 @@ export async function buildProject(
           path.join(temp, "deck.pptx"),
           images.map((image) => scenes.get(image.id)),
         );
+      if (motionActive)
+        motionReceipts = await applyNativeMotion(
+          path.join(temp, "deck.pptx"),
+          effectiveMotion,
+        );
       artifacts.push({
         file: "deck.pptx",
         format: "pptx",
@@ -447,6 +522,23 @@ export async function buildProject(
       path.join(temp, "report.json"),
       JSON.stringify(report, null, 2),
     );
+    let motionAsset;
+    if (motionActive && formats.includes("pptx")) {
+      const bytes = Buffer.from(
+        JSON.stringify(
+          {
+            version: 1,
+            mode: motionMode,
+            requested: requestedMotion,
+            applied: motionReceipts,
+          },
+          null,
+          2,
+        ),
+      );
+      await writeFile(path.join(temp, "motion.json"), bytes);
+      motionAsset = { file: "motion.json", sha256: sha(bytes) };
+    }
     let conversionAsset;
     if (formats.includes("pptx") && pptxMode === "editable") {
       const bytes = Buffer.from(JSON.stringify(conversion, null, 2));
@@ -455,13 +547,15 @@ export async function buildProject(
     }
     const build = {
       version: 1,
-      engine: "0.4.0",
+      engine: "0.5.0",
       sourceFingerprint: fingerprint,
       createdAt: new Date().toISOString(),
       size: project.manifest.size,
       scale: scale ?? project.manifest.render.scale,
       pdfMode,
       pptxMode,
+      motionMode,
+      ...(motionAsset ? { motion: motionAsset } : {}),
       ...(conversionAsset ? { conversion: conversionAsset } : {}),
       ok: report.ok,
       slides: images.map(({ notes, sources, ...image }) => image),
@@ -482,6 +576,10 @@ export async function buildProject(
       ...report,
       output: out,
       pptxMode,
+      motionMode,
+      ...(motionAsset
+        ? { motionReport: path.join(out, motionAsset.file) }
+        : {}),
       ...(conversionAsset
         ? { conversionReport: path.join(out, conversionAsset.file) }
         : {}),

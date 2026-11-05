@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+  <body>
+    <section class="slide" data-pptx-layout="controls">
+      <div
+        data-pptx="text"
+        data-pptx-id="kicker"
+        style="font-size: 20px; color: #d96e42; letter-spacing: 2px"
+      >
+        01 / CONTROL MOTION
+      </div>
+      <h1 data-pptx="text" data-pptx-id="heading">控件按顺序进入画面</h1>
+      <div
+        data-pptx="text"
+        data-pptx-id="lead"
+        style="font-size: 28px; color: #617168"
+      >
+        淡入、飞入与条形展开，使用同一套控件附加效果
+      </div>
+      <div
+        data-pptx-group="intro"
+        data-pptx-motion='{"effect": "fade-in", "durationMs": 500, "trigger": "after-previous", "order": 1}'
+        class="card"
+        style="left: 72px; top: 290px; width: 640px; height: 250px"
+      >
+        <div data-pptx="shape" data-pptx-id="intro-bg" class="card-bg"></div>
+        <div
+          data-pptx="text"
+          data-pptx-id="intro-title"
+          style="
+            position: absolute;
+            left: 28px;
+            top: 28px;
+            width: 584px;
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1.35;
+          "
+        >
+          自动淡入
+        </div>
+        <div
+          data-pptx="text"
+          data-pptx-id="intro-body"
+          style="
+            position: absolute;
+            left: 28px;
+            top: 100px;
+            width: 584px;
+            font-size: 28px;
+            line-height: 1.5;
+          "
+        >
+          编组作为一个整体进入<br />组内文字仍然可编辑
+        </div>
+      </div>
+      <div
+        data-pptx-group="fly"
+        data-pptx-motion='{"effect": "fly-in", "direction": "left", "durationMs": 600, "trigger": "on-click", "order": 2}'
+        class="card"
+        style="left: 72px; top: 570px; width: 640px; height: 210px"
+      >
+        <div data-pptx="shape" data-pptx-id="fly-bg" class="card-bg"></div>
+        <div
+          data-pptx="text"
+          data-pptx-id="fly-title"
+          style="
+            position: absolute;
+            left: 28px;
+            top: 28px;
+            width: 584px;
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1.35;
+          "
+        >
+          点击飞入
+        </div>
+        <div
+          data-pptx="text"
+          data-pptx-id="fly-body"
+          style="
+            position: absolute;
+            left: 28px;
+            top: 100px;
+            width: 584px;
+            font-size: 28px;
+            line-height: 1.5;
+          "
+        >
+          来自左侧的飞入效果<br />网页与 PPT 共用方向和时长
+        </div>
+      </div>
+      <div
+        data-pptx="text"
+        data-pptx-id="label-0"
+        style="
+          position: absolute;
+          left: 840px;
+          top: 310px;
+          width: 650px;
+          font-size: 24px;
+          color: #617168;
+        "
+      >
+        系列 1 · 60
+      </div>
+      <div
+        data-pptx="shape"
+        data-pptx-id="bar-0"
+        data-pptx-motion='{"effect": "reveal-in", "direction": "left", "durationMs": 800, "trigger": "on-click", "delayMs": 0, "order": 3}'
+        class="bar"
+        style="top: 365px; width: 324px"
+      ></div>
+      <div
+        data-pptx="text"
+        data-pptx-id="label-1"
+        style="
+          position: absolute;
+          left: 840px;
+          top: 450px;
+          width: 650px;
+          font-size: 24px;
+          color: #617168;
+        "
+      >
+        系列 2 · 80
+      </div>
+      <div
+        data-pptx="shape"
+        data-pptx-id="bar-1"
+        data-pptx-motion='{"effect": "reveal-in", "direction": "left", "durationMs": 800, "trigger": "with-previous", "delayMs": 150, "order": 4}'
+        class="bar"
+        style="top: 505px; width: 432px"
+      ></div>
+      <div
+        data-pptx="text"
+        data-pptx-id="label-2"
+        style="
+          position: absolute;
+          left: 840px;
+          top: 590px;
+          width: 650px;
+          font-size: 24px;
+          color: #617168;
+        "
+      >
+        系列 3 · 100
+      </div>
+      <div
+        data-pptx="shape"
+        data-pptx-id="bar-2"
+        data-pptx-motion='{"effect": "reveal-in", "direction": "left", "durationMs": 800, "trigger": "with-previous", "delayMs": 150, "order": 5}'
+        class="bar"
+        style="top: 645px; width: 540px"
+      ></div>
+      <div
+        data-pptx="text"
+        data-pptx-id="data-note"
+        style="
+          position: absolute;
+          left: 840px;
+          top: 755px;
+          width: 650px;
+          font-size: 20px;
+          color: #617168;
+        "
+      >
+        演示值 · 条形为原生形状
+      </div>
+      <div data-pptx-group="footer" class="footer">
+        <div data-pptx="text" data-pptx-id="footer-note" style="">
+          → / 空格：播放步骤，再翻页
+        </div>
+        <div data-pptx="text" data-pptx-id="footer-page" style="">1 / 4</div>
+      </div>
+    </section>
+  </body>
+</html>

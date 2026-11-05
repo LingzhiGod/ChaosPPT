@@ -88,7 +88,7 @@ async function slideHTML(project, slide) {
     .join("\n");
   const base = fileUrl(path.posix.dirname(slide.file)) + "/";
   const config = { fonts: d.fonts, size: d.size, slide, seed: d.render.seed };
-  const injection = `<meta charset="utf-8"><base href="${escapeHTML(base)}"><link rel="icon" href="data:,"><script>window.__CHAOSPPT_CONFIG__=${json(config)};(()=>{let seed=${d.render.seed}>>>0;Math.random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);})();</script><script src="/__engine/runtime.js"></script><link rel="stylesheet" href="/__engine/runtime.css">${d.theme ? `<link rel="stylesheet" href="${escapeHTML(fileUrl(d.theme))}">` : ""}<style>${fonts}\n:root{--slide-width:${d.size.width}px;--slide-height:${d.size.height}px}@page{size:${d.size.width}px ${d.size.height}px;margin:0}</style>`;
+  const injection = `<meta charset="utf-8"><base href="${escapeHTML(base)}"><link rel="icon" href="data:,"><script>window.__CHAOSPPT_CONFIG__=${json(config)};(()=>{let seed=${d.render.seed}>>>0;Math.random=()=>((seed=(1664525*seed+1013904223)>>>0)/4294967296);})();</script><script src="/__engine/runtime.js"></script><script type="module" src="/__engine/motion/browser.js"></script><link rel="stylesheet" href="/__engine/runtime.css">${d.theme ? `<link rel="stylesheet" href="${escapeHTML(fileUrl(d.theme))}">` : ""}<style>${fonts}\n:root{--slide-width:${d.size.width}px;--slide-height:${d.size.height}px}@page{size:${d.size.width}px ${d.size.height}px;margin:0}</style>`;
   headNode.childNodes = [
     ...parseFragment(injection).childNodes,
     ...headNode.childNodes.filter((n) => n.tagName !== "base"),
@@ -127,9 +127,22 @@ export async function startServer(root, { port = 0 } = {}) {
         type = "text/html; charset=utf-8";
       if (p === "/") {
         result = await readFile(path.join(engineRoot, "assets/player.html"));
+      } else if (p === "/__engine/player.js") {
+        result = await readFile(path.join(engineRoot, "assets/player.js"));
+        type = mime[".js"];
       } else if (p === "/__engine/runtime.js") {
         result = await readFile(
           path.join(engineRoot, "src/browser-runtime.js"),
+        );
+        type = mime[".js"];
+      } else if (
+        [
+          "/__engine/motion/browser.js",
+          "/__engine/motion/contract.js",
+        ].includes(p)
+      ) {
+        result = await readFile(
+          path.join(engineRoot, "src/motion", path.basename(p)),
         );
         type = mime[".js"];
       } else if (p === "/__engine/runtime.css") {

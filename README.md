@@ -4,7 +4,7 @@
 
 ChaosPPT 包含一个面向 Agent 的设计 Skill 和一个本地渲染引擎。新建页面采用显式控件：一段文字对应一个富文本框，一个组件对应一个原生编组；需要保留复杂绘制时，显式使用图片控件。
 
-当前引擎版本 **0.4.0** · Node.js **20+** · Chromium / Playwright
+当前引擎版本 **0.5.0** · Node.js **20+** · Chromium / Playwright
 
 [快速开始](#快速开始) · [安装-skill](#安装-skill) · [控件模型](#控件模型) · [导出模式](#导出模式) · [能力边界](#能力边界) · [更新日志](CHANGELOG.md)
 
@@ -34,7 +34,7 @@ node src/cli.js init ./my-deck
 node src/cli.js dev ./my-deck --port 4173
 ```
 
-打开终端返回的本机地址。预览支持保存后刷新、方向键翻页和淡入效果；窗口变化只缩放画布，不改变页面布局。F 切换演示布局。
+打开终端返回的本机地址。预览支持保存后刷新、方向键翻页，以及显式声明的控件动画和页面转场；窗口变化只缩放画布，不改变页面布局。F 切换演示布局。
 
 在另一个终端中检查并导出：
 
@@ -87,14 +87,22 @@ Skill 还包含图表选型、数据编码、可读性和文案规范：短标�
 
 ```html
 <section class="slide" data-pptx-layout="controls">
-  <div data-pptx-group="card"
-       style="position:relative;width:640px;height:300px">
-    <div data-pptx="shape" data-pptx-id="card-bg"
-         style="position:absolute;inset:0;background:#e4ebdc;border-radius:12px"></div>
+  <div
+    data-pptx-group="card"
+    style="position:relative;width:640px;height:300px"
+  >
+    <div
+      data-pptx="shape"
+      data-pptx-id="card-bg"
+      style="position:absolute;inset:0;background:#e4ebdc;border-radius:12px"
+    ></div>
     <div style="position:relative;padding:28px">
-      <div data-pptx="text" data-pptx-id="body"
-           style="font-size:28px;line-height:1.5">
-        一个完整段落，包含 <b>局部加粗</b><br>
+      <div
+        data-pptx="text"
+        data-pptx-id="body"
+        style="font-size:28px;line-height:1.5"
+      >
+        一个完整段落，包含 <b>局部加粗</b><br />
         换行仍在同一个文本框内
       </div>
     </div>
@@ -102,14 +110,14 @@ Skill 还包含图表选型、数据编码、可读性和文案规范：短标�
 </section>
 ```
 
-| 控件 | 标记 | 可编辑模式的输出 |
-| --- | --- | --- |
-| 文本 | `data-pptx="text"` | 一个富文本框，保留段落、内联样式和换行 |
-| 形状 | `data-pptx="shape"` | 一个原生矩形、圆角矩形或椭圆 |
-| 图片 | `data-pptx="image"` | 一个可替换图片对象，保留渲染后的裁剪结果 |
-| 编组 | `data-pptx="group"` | 一个真实 PPT 编组，支持嵌套 |
-| 媒体 | `data-pptx="media"` | 一个内嵌 MP4/GIF 对象，另需 `data-pptx-media` |
-| 栅格化 | `data-pptx="raster"` | 一个图片对象，按非透明内容裁紧边界 |
+| 控件   | 标记                 | 可编辑模式的输出                              |
+| ------ | -------------------- | --------------------------------------------- |
+| 文本   | `data-pptx="text"`   | 一个富文本框，保留段落、内联样式和换行        |
+| 形状   | `data-pptx="shape"`  | 一个原生矩形、圆角矩形或椭圆                  |
+| 图片   | `data-pptx="image"`  | 一个可替换图片对象，保留渲染后的裁剪结果      |
+| 编组   | `data-pptx="group"`  | 一个真实 PPT 编组，支持嵌套                   |
+| 媒体   | `data-pptx="media"`  | 一个内嵌 MP4/GIF 对象，另需 `data-pptx-media` |
+| 栅格化 | `data-pptx="raster"` | 一个图片对象，按非透明内容裁紧边界            |
 
 - 每个控件需要页面内唯一的 `data-pptx-id`；`data-pptx-group="card"` 是 group + ID 的简写
 - 未标记容器可以使用 Grid/Flex 布局，但不能直接承载可见文字、背景、边框等内容
@@ -132,14 +140,14 @@ node src/cli.js export ./my-deck --pptx-mode editable
 node src/cli.js export ./my-deck --format pdf --pdf-mode raster
 ```
 
-| 内容 | 兼容模式 | 可编辑模式（显式控件） |
-| --- | --- | --- |
-| 文字/形状 | 页面截图 | 原生文本框、形状 |
-| 组件编组 | 烘焙在页面截图中 | 原生嵌套编组 |
-| 普通图片 | 页面截图 | 独立图片对象 |
-| Canvas/SVG/复杂效果 | 页面截图 | 显式 `raster` 图片控件 |
-| 标记的 MP4/GIF | 原生媒体 | 原生媒体 |
-| PDF/PNG | 浏览器静态输出 | 同一浏览器静态输出，不受 PPTX 模式影响 |
+| 内容                | 兼容模式         | 可编辑模式（显式控件）                 |
+| ------------------- | ---------------- | -------------------------------------- |
+| 文字/形状           | 页面截图         | 原生文本框、形状                       |
+| 组件编组            | 烘焙在页面截图中 | 原生嵌套编组                           |
+| 普通图片            | 页面截图         | 独立图片对象                           |
+| Canvas/SVG/复杂效果 | 页面截图         | 显式 `raster` 图片控件                 |
+| 标记的 MP4/GIF      | 原生媒体         | 原生媒体                               |
+| PDF/PNG             | 浏览器静态输出   | 同一浏览器静态输出，不受 PPTX 模式影响 |
 
 旧的未标记 HTML 在 editable 模式下仍走推断路径，可能将文字拆成视觉行/片段。这是迁移兼容能力，不是新控件规范的行为。
 
@@ -148,14 +156,25 @@ node src/cli.js export ./my-deck --format pdf --pdf-mode raster
 ## MP4/GIF 与异步内容
 
 ```html
-<video data-pptx="media" data-pptx-id="demo-video" data-pptx-media
-       src="assets/demo.mp4" poster="assets/poster.png"
-       controls preload="metadata"
-       style="width:640px;height:360px;object-fit:fill"></video>
+<video
+  data-pptx="media"
+  data-pptx-id="demo-video"
+  data-pptx-media
+  src="assets/demo.mp4"
+  poster="assets/poster.png"
+  controls
+  preload="metadata"
+  style="width:640px;height:360px;object-fit:fill"
+></video>
 
-<img data-pptx="media" data-pptx-id="demo-gif" data-pptx-media
-     src="assets/demo.gif" alt="演示动画"
-     style="width:640px;height:360px;object-fit:fill">
+<img
+  data-pptx="media"
+  data-pptx-id="demo-gif"
+  data-pptx-media
+  src="assets/demo.gif"
+  alt="演示动画"
+  style="width:640px;height:360px;object-fit:fill"
+/>
 ```
 
 MP4 需要本地 PNG/JPEG 封面。原始媒体字节内嵌到 PPTX；PDF/PNG 使用视频封面或 GIF 首帧。HTML 的自动播放、静音、循环设置不自动映射为 PPTX 播放设置。
@@ -163,13 +182,15 @@ MP4 需要本地 PNG/JPEG 封面。原始媒体字节内嵌到 PPTX；PDF/PNG �
 异步数据或 Canvas 绘制在脚本初始化时注册：
 
 ```js
-ChaosPPT.waitUntil((async () => {
-  const response = await fetch('../assets/data.json');
-  if (!response.ok) throw new Error('数据加载失败');
-  const data = await response.json();
-  await document.fonts.load('400 24px "Noto Sans SC"');
-  // 完成绘图后再结束 Promise
-})());
+ChaosPPT.waitUntil(
+  (async () => {
+    const response = await fetch("../assets/data.json");
+    if (!response.ok) throw new Error("数据加载失败");
+    const data = await response.json();
+    await document.fonts.load('400 24px "Noto Sans SC"');
+    // 完成绘图后再结束 Promise
+  })(),
+);
 
 ChaosPPT.onCapture(() => {
   // 停止自己管理的动画循环，设置导出的静态状态
@@ -207,14 +228,14 @@ dist/
 
 ## 命令与检查
 
-| 命令 | 用途 |
-| --- | --- |
-| `init` | 创建默认显式控件项目，目标目录需为空 |
-| `dev` | 本机预览、键盘翻页、保存后刷新 |
+| 命令      | 用途                                   |
+| --------- | -------------------------------------- |
+| `init`    | 创建默认显式控件项目，目标目录需为空   |
+| `dev`     | 本机预览、键盘翻页、保存后刷新         |
 | `inspect` | 页面运行、布局、资源与显式控件规范检查 |
-| `render` | 生成 PNG 与诊断记录 |
-| `export` | 导出 PDF/PPTX 与参考 PNG |
-| `verify` | 对已生成产物进行结构和完整性验证 |
+| `render`  | 生成 PNG 与诊断记录                    |
+| `export`  | 导出 PDF/PPTX 与参考 PNG               |
+| `verify`  | 对已生成产物进行结构和完整性验证       |
 
 - `--slides id1,id2` 仅用于 inspect/render，保持 manifest 页序；export 始终导出完整文稿
 - `--scale 1..4` 控制截图分辨率，不改变逻辑布局
@@ -225,12 +246,12 @@ dist/
 
 ## 示例与详细文档
 
-| 目录 | 内容 |
-| --- | --- |
+| 目录                                   | 内容                                                    |
+| -------------------------------------- | ------------------------------------------------------- |
 | [examples/controls](examples/controls) | 推荐入口：两页显式控件、富文本、嵌套编组和裁紧的 Canvas |
-| [examples/editable](examples/editable) | 旧 HTML 推断路径与局部栅格化对照 |
-| [examples/media](examples/media) | MP4/GIF 嵌入示例 |
-| [examples/demo](examples/demo) | 原始三页中文 HTML 示例；`npm run demo` 启动此示例 |
+| [examples/editable](examples/editable) | 旧 HTML 推断路径与局部栅格化对照                        |
+| [examples/media](examples/media)       | MP4/GIF 嵌入示例                                        |
+| [examples/demo](examples/demo)         | 原始三页中文 HTML 示例；`npm run demo` 启动此示例       |
 
 [引擎/API 参考](skills/chaosppt/references/engine.md) · [控件规范](skills/chaosppt/references/controls.md) · [验证记录](docs/verification.md) · [Changelog](CHANGELOG.md)
 
@@ -240,7 +261,7 @@ dist/
 - 可编辑 PPTX 不内嵌字体；HTML 加载了自定义字体，不代表接收端 Office 已安装该字体
 - 不保证任意 HTML/CSS 转译或跨软件像素一致；特殊字体、复杂效果和媒体需要实际目标软件检查
 - **媒体兼容性观察**：一次复杂 Demo 测试中，LibreOffice 导入编组内 MP4 失败，静态导出也未显示原生视频封面。推荐媒体先作为页级对象；必要时另放静态封面图片。该问题尚未在引擎层自动限制或根治，不能据此推断所有 PowerPoint/WPS 版本的行为
-- HTML 预览有简单淡入翻页；PPTX 原生转场和复杂动画尚未实现，PDF 为静态输出
+- 声明式动画支持 Fade/Fly/Wipe 和原生 Morph；任意 CSS 动画、复杂路径、循环与媒体播放命令尚未映射。Morph 需目标软件支持，旧软件使用 Fade 兼容分支；PDF 为静态输出
 - 不提供自动拆分任意网页、拖拽编辑器或主题编辑 GUI；JSX/TypeScript/bare imports 需作者自行预编译
 - 默认导出阻止远程 HTTP/WebSocket；服务只监听本机并限制项目路径，但不构成恶意脚本沙箱。项目内不要存放凭据，不可信项目应额外隔离
 
@@ -259,3 +280,31 @@ node src/cli.js --help
 代码模块：`project` 管协议，`server` 管页面组装，`browser-runtime` 管就绪，`diagnostics` 管测量，`editable` 管控件映射/组装，`media` 管媒体，`renderer` 管构建，`verify` 管产物检查。
 
 示例随附 [Noto Sans SC 字体的 OFL 许可](templates/controls/assets/OFL.txt)，分发字体时保留该文件。引擎依赖的许可由各依赖包提供。
+
+## 控件动画与跨页平滑过渡（v0.5）
+
+```html
+<div
+  data-pptx-group="card"
+  data-pptx-motion='{"effect":"fly-in","direction":"left","durationMs":600,"trigger":"on-click"}'
+>
+  <div data-pptx="text" data-pptx-id="title">整个编组一起进入</div>
+</div>
+```
+
+- `fade-in/out` → 网页透明度动画 / PPT 原生 Fade
+- `fly-in/out` → 网页平移 / PPT 原生 Fly
+- `reveal-in/out` → 网页裁切揭示/擦除 / PPT 原生 Wipe，适合条形与面板
+- `data-pptx-shared="key"` + 后一页 `transition:{"effect":"morph","durationMs":900}` → 网页共享元素过渡 / PPT 原生 Morph
+
+同一配置驱动双方的目标、方向、时长、延迟、点击顺序。编组是原子目标；不同时动画组及其后代。完整参数、限制与示例见 [动画契约](skills/chaosppt/references/motion.md)。
+
+```sh
+node src/cli.js dev examples/motion --port 4176
+node src/cli.js export examples/motion --pptx-mode editable --motion-mode native
+node src/cli.js verify examples/motion
+# 明确静态化，制作兼容版对照
+node src/cli.js export examples/motion --pptx-mode compatible --motion-mode static
+```
+
+PDF/PNG 保留作者静态布局，不隐藏尚未入场或已经离场的内容。`motion.json` 给出时序和对应关系；verify 检查真实 PPTX 时间线，而非只检查源标记。对支持的效果做到语义对应，不承诺不同播放器逐帧像素一致；PowerPoint/WPS 的实际播放仍应验收。

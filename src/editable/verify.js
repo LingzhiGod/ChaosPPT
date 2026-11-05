@@ -118,7 +118,10 @@ export async function verifyEditableSlide({
   };
   function position(o, n) {
     const name = first(o, "p:cNvPr")?.getAttribute("name");
-    check(name === n.objectName, "editable object order/identity");
+    check(
+      name === (n.nativeName || n.objectName),
+      "editable object order/identity",
+    );
     const xfrm = first(o, "a:xfrm");
     check(!!xfrm, "editable transform");
     const off = first(xfrm, "a:off"),
@@ -151,7 +154,18 @@ export async function verifyEditableSlide({
           (n.wrap ? "square" : "none"),
         "rich text wrapping policy",
       );
-      const bodyPr=first(body,'a:bodyPr');for(const [attr,index] of [['tIns',0],['rIns',1],['bIns',2],['lIns',3]])check(Number(bodyPr.getAttribute(attr))===Math.round(n.padding[index]*9525),'rich text CSS padding');
+      const bodyPr = first(body, "a:bodyPr");
+      for (const [attr, index] of [
+        ["tIns", 0],
+        ["rIns", 1],
+        ["bIns", 2],
+        ["lIns", 3],
+      ])
+        check(
+          Number(bodyPr.getAttribute(attr)) ===
+            Math.round(n.padding[index] * 9525),
+          "rich text CSS padding",
+        );
       const paragraphs = Array.from(body.childNodes).filter(
         (e) => e.nodeName === "a:p",
       );

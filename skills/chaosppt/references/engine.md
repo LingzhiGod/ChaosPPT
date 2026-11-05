@@ -1,4 +1,4 @@
-# Engine reference — v0.4
+# Engine reference — v0.5
 
 Deck planning and visual review follow the built-in [design principles](design-principles.md): shared theme/masters, stable semantic encodings, task-based chart selection and whole-deck review. These guide Agent decisions and do not add automatic design checks to the renderer.
 
@@ -168,7 +168,7 @@ Inspect `dist/conversion.json`: per-page text/shape/image/fallback/media counts,
 
 Fonts are NOT embedded in editable PPTX. Install the reported font families on the target presentation machine; otherwise substitution, changed spacing or missing glyphs can occur. The bundled example font may be loaded by HTML without being installed for Office. Inspect native PPTX with the same fonts available. PNG/PDF remain useful browser references, not evidence that the native PPTX looks identical. Use compatible mode when appearance takes priority.
 
-Repository showcase: `examples/editable`. This release adds native text/basic shapes/pictures; native data charts/tables, SVG path editing, automatic font embedding and native transitions remain separate future features.
+Repository showcase: `examples/editable`. This release adds native text/basic shapes/pictures; native data charts/tables, SVG path editing, automatic font embedding remain separate future features; declared native motion/transitions are described in [motion.md](motion.md).
 
 
 ## Explicit authoring (v0.4)
@@ -176,3 +176,8 @@ Repository showcase: `examples/editable`. This release adds native text/basic sh
 New `init` projects use `.slide[data-pptx-layout="controls"]` and explicit control IDs. Any data-pptx or data-pptx-group declaration also activates strict controls mode for that page. Read [controls.md](controls.md) for required markup, supported styles and 1:1 semantics. `inspect` validates declarations; editable export blocks invalid controls, while compatible export can still capture their browser appearance.
 
 Text controls emit one rich-text frame, preserving semantic inline runs and explicit paragraph breaks. Groups emit native nested `p:grpSp`. Raster controls—and legacy local fallback assets—are trimmed to their nontransparent bounds before PPTX insertion; complete-scene compositing fallbacks stay complete scenes. The conversion report records authoringMode, control IDs, richtext/group counts and fonts. Structural verify checks group hierarchy, neutral child transforms, one-to-one control identity, text paragraphs/runs and run formatting. Old HTML remains an explicit migration path, not the recommended new-authoring surface.
+
+
+## Motion (v0.5)
+
+See [motion.md](motion.md) before adding effects. `data-pptx-motion` adds a validated page-local effect sequence to a control; `data-pptx-shared` plus `slides[].transition` declares shared-object page transitions. `--motion-mode native|static` controls whether PPTX preserves declared effects (default native). Source layout stays canonical for PDF/PNG. New reports include `motion.json`; native export refuses unsupported mode combinations rather than silently dropping animations.

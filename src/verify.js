@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { PDFDocument } from "pdf-lib";
 import { unzipSync, strFromU8 } from "fflate";
 import { safeFile, loadProject } from "./project.js";
+import { verifyNativeMotion } from "./motion/verify.js";
 import { verifyEditableSlide } from "./editable/verify.js";
 import { projectFingerprint } from "./server.js";
 const sha = (b) => createHash("sha256").update(b).digest("hex");
@@ -19,6 +20,69 @@ export async function verifyDirectory(directory) {
     "build contains diagnostics errors or unsupported metadata",
   );
   check(build.slides.length > 0, "empty build");
+  let motionReceipt;
+  if (build.motion) {
+    const bytes = await readFile(await safeFile(directory, build.motion.file));
+    check(sha(bytes) === build.motion.sha256, "motion report hash");
+    motionReceipt = JSON.parse(bytes);
+    check(
+      motionReceipt.mode === build.motionMode &&
+        ["native", "static"].includes(motionReceipt.mode),
+      "motion mode receipt",
+    );
+    check(
+      motionReceipt.requested.length === build.slides.length,
+      "requested motion page count",
+    );
+    for (let i = 0; i < motionReceipt.applied.length; i++) {
+      const requested = motionReceipt.requested[i],
+        applied = motionReceipt.applied[i];
+      check(
+        requested.slideId === build.slides[i].id &&
+          applied.slideId === build.slides[i].id,
+        "motion slide identity",
+      );
+      if (motionReceipt.mode === "static") {
+        check(
+          !applied.events.length &&
+            !applied.shared.length &&
+            applied.transition.effect === "none",
+          "static motion must be flattened",
+        );
+      } else {
+        const signature = (e) => [
+          e.controlId,
+          e.effect,
+          e.direction,
+          e.durationMs,
+          e.delayMs,
+          e.trigger,
+          e.order,
+          e.step,
+          e.startMs,
+        ];
+        check(
+          JSON.stringify(requested.events.map(signature)) ===
+            JSON.stringify(applied.events.map(signature)),
+          "requested/native motion correspondence",
+        );
+        check(
+          JSON.stringify(requested.transition) ===
+            JSON.stringify(applied.transition),
+          "requested/native transition correspondence",
+        );
+        check(
+          JSON.stringify(requested.shared.map((s) => [s.key, s.controlId])) ===
+            JSON.stringify(applied.shared.map((s) => [s.key, s.controlId])),
+          "requested/native shared correspondence",
+        );
+      }
+    }
+    check(
+      motionReceipt.applied.length === build.slides.length,
+      "motion page count",
+    );
+  }
   check(
     ["compatible", "editable"].includes(build.pptxMode || "compatible"),
     "PPTX mode",
@@ -112,6 +176,11 @@ export async function verifyDirectory(directory) {
             "ppt/" + relations.get(order[i]),
           ),
           xml = text(slidePath);
+        if (motionReceipt)
+          verifyNativeMotion(xml, {
+            ...motionReceipt.applied[i],
+            size: build.size,
+          });
         if (build.pptxMode === "editable") {
           const relPath = path.posix.join(
             path.posix.dirname(slidePath),
@@ -229,6 +298,9 @@ export async function verifyDirectory(directory) {
       "PDF page count and dimensions",
       "PPTX page order, embedded image hashes and placement",
       "MP4/GIF original bytes, relationships, posters and placement",
+      ...(build.motion
+        ? ["native motion targets, presets, timing and shared transitions"]
+        : []),
       ...(build.pptxMode === "editable"
         ? ["native scene hashes, object order/types/positions and text content"]
         : []),

@@ -52,3 +52,13 @@ Environment: macOS arm64, Node v22.23.2, locked Playwright Chromium.
 - Explicit raster and legacy local fallback images are alpha-trimmed. The old showcase Canvas is now at x=1190,y=588,w=338,h=170 instead of a full-slide transparent picture.
 - Installed Skill staged with its complete engine/templates and dependency audit: zero known vulnerabilities. New authoring uses explicit controls; compatibility export and old unmarked inference remain migration paths.
 - Same-input transaction check: baseline produces no native group and fragmented text; modified produces one group and one text frame; rollback restores original source hashes and baseline behavior. Artifacts and literal outputs are recorded outside version control under artifacts/editable-transaction, retaining the previous transaction history.
+
+
+## v0.5 control motion (2026-11-05)
+
+- Full suite: 73 tests pass. Coverage includes strict schema/null/falsy rejection, click/with/after timing, repeated exit/entrance state, atomic group hiding, static canonical capture, reduced motion, native targets/presets/directions/durations, shared-key Morph, static-mode guards and tampering detection.
+- Browser playback was exercised at intermediate fly/reveal/shared states, not only at endpoints. Unchanged shared text uses one interpolated instance to avoid duplicate glyphs during the transition.
+- Independent review reproduced a previous-effect completion race, group-child visibility leakage and falsy-direction validation. All three original repros were independently rerun after fixes.
+- The four-page native example contains 10 control effects. Bundled LibreOffice imported the PPTX as real entrance/exit Fade, Fly and Wipe behaviors with direction and trigger modes; it falls back to Fade for Morph. The import receipt is in artifacts/motion/native-import-check.json outside version control.
+- Morph uses stable !! names for shared objects/members and page-unique names for others. Verification checks actual native timing and requested/applied correspondence, not just metadata presence.
+- This is semantic effect correspondence, not cross-software frame identity. Native PowerPoint/WPS slideshow playback was not certified. Media targets, media-containing groups and arbitrary CSS animation are not silently mapped.
