@@ -4,3 +4,10 @@ node_modules
 .DS_Store
 
 artifacts/
+
+# Development-only material is archived outside this runtime repository
+/docs/
+/tests/
+/examples/
+/templates/starter/
+/my-deck/

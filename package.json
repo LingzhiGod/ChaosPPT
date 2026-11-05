@@ -7,8 +7,6 @@
     "chaosppt": "src/cli.js"
   },
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/*.test.js",
-    "demo": "node src/cli.js dev examples/demo",
     "install-skill": "node scripts/install-skill.mjs"
   },
   "engines": {

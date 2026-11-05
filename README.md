@@ -30,8 +30,8 @@ npm ci
 npx playwright install chromium
 
 # 在空目录中创建两页中文显式控件模板
-node src/cli.js init ./my-deck
-node src/cli.js dev ./my-deck --port 4173
+node src/cli.js init ../my-deck
+node src/cli.js dev ../my-deck --port 4173
 ```
 
 打开终端返回的本机地址。预览支持保存后刷新、方向键翻页，以及显式声明的控件动画和页面转场；窗口变化只缩放画布，不改变页面布局。F 切换演示布局。
@@ -39,9 +39,9 @@ node src/cli.js dev ./my-deck --port 4173
 在另一个终端中检查并导出：
 
 ```sh
-node src/cli.js inspect ./my-deck --json
-node src/cli.js export ./my-deck --format pdf,pptx --pptx-mode editable
-node src/cli.js verify ./my-deck --json
+node src/cli.js inspect ../my-deck --json
+node src/cli.js export ../my-deck --format pdf,pptx --pptx-mode editable
+node src/cli.js verify ../my-deck --json
 ```
 
 输出在 `my-deck/dist/`。如果 npm 缓存存在权限问题，可指定独立缓存：`npm ci --cache /tmp/chaosppt-npm-cache`。
@@ -131,13 +131,13 @@ Skill 还包含图表选型、数据编码、可读性和文案规范：短标�
 
 ```sh
 # 默认：兼容模式
-node src/cli.js export ./my-deck --pptx-mode compatible
+node src/cli.js export ../my-deck --pptx-mode compatible
 
 # 显式控件推荐：可编辑模式
-node src/cli.js export ./my-deck --pptx-mode editable
+node src/cli.js export ../my-deck --pptx-mode editable
 
 # 截图式 PDF；默认 vector 尽可能保留文字和矢量
-node src/cli.js export ./my-deck --format pdf --pdf-mode raster
+node src/cli.js export ../my-deck --format pdf --pdf-mode raster
 ```
 
 | 内容                | 兼容模式         | 可编辑模式（显式控件）                 |
@@ -244,16 +244,22 @@ dist/
 
 浏览器可能修复不规范 HTML、忽略无效 CSS，因此这里不是完整的 HTML/CSS 静态语法检查器。verify 检查页序、尺寸、哈希、原生对象、富文本、组坐标和媒体关系，也不等于视觉审稿或播放验收。
 
-## 示例与详细文档
+## Skill 所需文件
 
-| 目录                                   | 内容                                                    |
-| -------------------------------------- | ------------------------------------------------------- |
-| [examples/controls](examples/controls) | 推荐入口：两页显式控件、富文本、嵌套编组和裁紧的 Canvas |
-| [examples/editable](examples/editable) | 旧 HTML 推断路径与局部栅格化对照                        |
-| [examples/media](examples/media)       | MP4/GIF 嵌入示例                                        |
-| [examples/demo](examples/demo)         | 原始三页中文 HTML 示例；`npm run demo` 启动此示例       |
+本仓库只分发 Skill 与运行、安装必需的文件，不包含开发计划、测试用例、测试素材或独立 Demo。
 
-[引擎/API 参考](skills/chaosppt/references/engine.md) · [控件规范](skills/chaosppt/references/controls.md) · [验证记录](docs/verification.md) · [Changelog](CHANGELOG.md)
+```text
+skills/chaosppt/   Skill 指令、控件/设计/动画规范和启动入口
+src/              HTML 渲染、诊断、媒体与 PDF/PPTX 导出引擎
+assets/           预览播放器与运行样式
+templates/controls/  init 使用的默认显式控件模板、字体及许可证
+scripts/          Skill 安装器
+package*.json     运行依赖与锁文件
+```
+
+请在仓库外创建演示稿项目，例如快速开始中的 `../my-deck`。`references/` 是 Agent 完成设计与导出的使用规范，不是开发过程文档，需要随 Skill 保留。
+
+[引擎/API 参考](skills/chaosppt/references/engine.md) · [控件规范](skills/chaosppt/references/controls.md) · [动画规范](skills/chaosppt/references/motion.md) · [Changelog](CHANGELOG.md)
 
 ## 能力边界
 
@@ -267,19 +273,11 @@ dist/
 
 导出阶段由本地代码完成，不需要模型 API Key；模型主要参与材料理解、设计、源码编写和根据报告修订。首次安装依赖需要网络，准备好本地素材与运行依赖后可离线导出。
 
-## 开发与验证
+## 安装后验证与许可
 
-```sh
-npm test
-npm audit
-node src/cli.js --help
-```
+使用快速开始中的 `init → inspect → export → verify` 检查实际运行。`verify` 是用户产物完整性检查，属于运行功能；开发测试与内部验证报告不随本仓库分发。
 
-测试覆盖配置、路径边界、浏览器生命周期、布局、控件声明、富文本、编组、媒体、产物篡改和旧输出保护。安装了 Codex skill-creator 时，还可用其 `quick_validate.py` 验证 `skills/chaosppt`。
-
-代码模块：`project` 管协议，`server` 管页面组装，`browser-runtime` 管就绪，`diagnostics` 管测量，`editable` 管控件映射/组装，`media` 管媒体，`renderer` 管构建，`verify` 管产物检查。
-
-示例随附 [Noto Sans SC 字体的 OFL 许可](templates/controls/assets/OFL.txt)，分发字体时保留该文件。引擎依赖的许可由各依赖包提供。
+默认模板随附 [Noto Sans SC 字体的 OFL 许可](templates/controls/assets/OFL.txt)，分发字体时保留该文件。引擎依赖的许可由各依赖包提供。
 
 ## 控件动画与跨页平滑过渡（v0.5）
 
@@ -300,11 +298,11 @@ node src/cli.js --help
 同一配置驱动双方的目标、方向、时长、延迟、点击顺序。编组是原子目标；不同时动画组及其后代。完整参数、限制与示例见 [动画契约](skills/chaosppt/references/motion.md)。
 
 ```sh
-node src/cli.js dev examples/motion --port 4176
-node src/cli.js export examples/motion --pptx-mode editable --motion-mode native
-node src/cli.js verify examples/motion
+node src/cli.js dev ../my-deck --port 4176
+node src/cli.js export ../my-deck --pptx-mode editable --motion-mode native
+node src/cli.js verify ../my-deck
 # 明确静态化，制作兼容版对照
-node src/cli.js export examples/motion --pptx-mode compatible --motion-mode static
+node src/cli.js export ../my-deck --pptx-mode compatible --motion-mode static
 ```
 
 PDF/PNG 保留作者静态布局，不隐藏尚未入场或已经离场的内容。`motion.json` 给出时序和对应关系；verify 检查真实 PPTX 时间线，而非只检查源标记。对支持的效果做到语义对应，不承诺不同播放器逐帧像素一致；PowerPoint/WPS 的实际播放仍应验收。

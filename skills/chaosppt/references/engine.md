@@ -19,7 +19,7 @@ node RUNNER verify PROJECT --json
 
 `--slides` supports inspect/render only and keeps manifest order, regardless of option order. `export` always builds all pages. `--scale` is 1–4 and affects PNG/PPTX resolution, not layout. PDF modes: `vector` (browser print, text where possible) and `raster` (one screenshot per page). Exit statuses: 0 success, 1 failed diagnostics/verification, 2 invocation/config/runtime error. Errors with `--json` are JSON on stdout. `dev` prints its URL and remains running until interrupted.
 
-New projects use a two-page Chinese explicit-controls starter (the legacy three-page starter remains in the engine templates) with a local OFL Noto Sans SC variable font. Keep its OFL notice when distributing the font. Installed skills carry the engine and dependencies in `assets/engine`; the repository installer prepares this bundle. If manually copying only the skill folder, set `CHAOSPPT_ENGINE` to an engine repository with dependencies installed.
+New projects use a two-page Chinese explicit-controls starter with a local OFL Noto Sans SC variable font. Keep its OFL notice when distributing the font. Installed skills carry the engine and dependencies in `assets/engine`; the repository installer prepares this bundle. If manually copying only the skill folder, set `CHAOSPPT_ENGINE` to an engine repository with dependencies installed.
 
 ## Manifest
 
@@ -143,7 +143,7 @@ Opt in with a boolean HTML attribute. Unmarked elements keep their existing flat
 - A PPTX contains the actual local media, not a network link. No separate video files are needed by its recipient. `dist/media/` stores source bytes and captured posters for verification; build.json records each media object's geometry and hash plus a separate slide background.
 - `verify` checks embedded MP4/GIF and poster hashes, native relationships, object counts and positions. It is not a native PowerPoint/WPS playback test. Confirm playback in the target app before an important presentation.
 
-Runnable repository example: `examples/media`. Its synthetic fixtures were generated locally with ffmpeg; ffmpeg is not required by the export engine.
+Supply your own local MP4/GIF files and MP4 poster using the declarations above. ffmpeg is not required by the export engine.
 
 
 ## PPTX export modes (v0.3)
@@ -168,7 +168,7 @@ Inspect `dist/conversion.json`: per-page text/shape/image/fallback/media counts,
 
 Fonts are NOT embedded in editable PPTX. Install the reported font families on the target presentation machine; otherwise substitution, changed spacing or missing glyphs can occur. The bundled example font may be loaded by HTML without being installed for Office. Inspect native PPTX with the same fonts available. PNG/PDF remain useful browser references, not evidence that the native PPTX looks identical. Use compatible mode when appearance takes priority.
 
-Repository showcase: `examples/editable`. This release adds native text/basic shapes/pictures; native data charts/tables, SVG path editing, automatic font embedding remain separate future features; declared native motion/transitions are described in [motion.md](motion.md).
+Editable export provides native text/basic shapes/pictures; native data charts/tables, SVG path editing, automatic font embedding remain separate future features; declared native motion/transitions are described in [motion.md](motion.md).
 
 
 ## Explicit authoring (v0.4)

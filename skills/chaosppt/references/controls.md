@@ -66,7 +66,7 @@ node RUNNER verify PROJECT --json
 
 `conversion.json` lists `authoringMode: controls`, declared IDs and object types, group/richtext counts, raster exceptions and required fonts. `verify` validates actual native group hierarchy/child-coordinate transforms, control count/order/identity, paragraph/run contents and formatting, and media/image hashes. It does not certify exact Office rendering or playback.
 
-Compatible mode remains the visual-fidelity escape hatch. Existing unmarked decks still use legacy inference under editable mode; migrate them by marking coherent text boxes and groups instead of relying on automatic fragmentation. The new starter and `examples/controls` demonstrate the recommended structure.
+Compatible mode remains the visual-fidelity escape hatch. Existing unmarked decks still use legacy inference under editable mode; migrate them by marking coherent text boxes and groups instead of relying on automatic fragmentation. The default project created by `init` demonstrates the recommended structure.
 
 
 ## 控件附加动画
