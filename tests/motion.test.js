@@ -210,3 +210,36 @@ test("page Fade is supported in compatible output without per-control effects", 
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("nested control animation warns without flattening or rejecting groups", async () => {
+  const root = await fixture();
+  try {
+    await writeFile(
+      path.join(root, "one.html"),
+      '<section class="slide" data-pptx-layout="controls"><div data-pptx-group="outer" style="width:400px;height:200px"><div data-pptx="group" data-pptx-id="inner" style="width:300px;height:150px"><div data-pptx="shape" data-pptx-id="bar" data-pptx-motion=\'{"effect":"fade-in"}\' style="width:200px;height:30px;background:red"></div></div></div></section>',
+    );
+    const inspected = await inspectProject(root);
+    const warnings = inspected.slides[0].issues.filter(
+      (i) => i.code === "MOTION_GROUP_CHILD_COMPATIBILITY",
+    );
+    assert.equal(warnings.length, 1);
+    assert.equal(warnings[0].severity, "warning");
+    assert.equal(warnings[0].controlId, "bar");
+    await buildProject(root, { formats: ["pptx"], pptxMode: "editable" });
+    const zip = unzipSync(await readFile(path.join(root, "dist/deck.pptx")));
+    const xml = strFromU8(zip["ppt/slides/slide1.xml"]);
+    assert.equal((xml.match(/<p:grpSp>/g) || []).length, 2);
+    assert.match(xml, /presetID="10"/);
+    assert.equal((await verifyProject(root)).ok, true);
+    await writeFile(path.join(root, "one.html"), html);
+    const atomic = await inspectProject(root);
+    assert.equal(
+      atomic.slides[0].issues.filter(
+        (i) => i.code === "MOTION_GROUP_CHILD_COMPATIBILITY",
+      ).length,
+      0,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

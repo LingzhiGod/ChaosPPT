@@ -91,8 +91,10 @@
           来自左侧的飞入效果<br />网页与 PPT 共用方向和时长
         </div>
       </div>
+      <!-- Layout only: animate bars/values as top-level native objects for WPS.
+           Keep real groups for components that animate as a whole. -->
       <div
-        data-pptx-group="comparison-chart"
+        data-element-id="comparison-chart"
         style="
           position: absolute;
           left: 760px;
@@ -358,7 +360,7 @@
           100
         </div>
         <div
-          data-pptx-group="chart-row-0"
+          data-element-id="chart-row-0"
           style="
             position: absolute;
             left: 0px;
@@ -456,7 +458,7 @@
           </div>
         </div>
         <div
-          data-pptx-group="chart-row-1"
+          data-element-id="chart-row-1"
           style="
             position: absolute;
             left: 0px;
@@ -554,7 +556,7 @@
           </div>
         </div>
         <div
-          data-pptx-group="chart-row-2"
+          data-element-id="chart-row-2"
           style="
             position: absolute;
             left: 0px;
@@ -652,7 +654,7 @@
           </div>
         </div>
         <div
-          data-pptx-group="chart-row-3"
+          data-element-id="chart-row-3"
           style="
             position: absolute;
             left: 0px;

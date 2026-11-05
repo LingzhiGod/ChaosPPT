@@ -163,6 +163,8 @@ export async function visitSlides(
               motion = await page.evaluate(() =>
                 window.ChaosPPT.motion.collect(),
               );
+              for (const warning of motion.compatibilityWarnings || [])
+                issues.push({ ...warning, slideId: slide.id });
             } catch (e) {
               issue("MOTION_INVALID", e.message);
             }

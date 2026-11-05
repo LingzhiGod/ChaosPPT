@@ -120,6 +120,21 @@ function collect() {
   }
   return {
     ...timeline,
+    compatibilityWarnings: targets.flatMap((target) => {
+      const group = target.parentElement?.closest(
+        '[data-pptx-group],[data-pptx="group"]',
+      );
+      return group
+        ? [
+            {
+              severity: "warning",
+              code: "MOTION_GROUP_CHILD_COMPATIBILITY",
+              controlId: idOf(target),
+              message: `Animated control ${idOf(target)} is inside native group ${idOf(group)}. WPS may omit grouped-child effects on import. For WPS, use unpainted layout containers for independently animated controls, or animate a top-level group as a whole. Verify playback in the target application.`,
+            },
+          ]
+        : [];
+    }),
     slideId: window.__CHAOSPPT_CONFIG__.slide.id,
     size: window.__CHAOSPPT_CONFIG__.size,
     shared,
