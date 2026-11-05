@@ -21,6 +21,7 @@ Read [the design principles](references/design-principles.md) before planning la
 
 Write for the audience's question and the strongest supported message. Read [the copy rules](references/copy-style.md) before drafting or revising visible slide text; they apply to every deck without a separate skill invocation.
 
+- Do not append sentence-ending periods to slide titles, headings, labels, bullets, captions or standalone short statements by default, even when a short statement is grammatically complete. Use normal punctuation for continuous prose when needed; preserve exact quotations, user-required punctuation, decimals, abbreviations and URLs. Apply the punctuation rules in the copy reference during final review.
 - Keep authoring housekeeping out of titles, footers, badges, captions and tiny text. Do not add “待测”“待补充”“真实材料待补充”“数据待核实”“仅供参考”“以实际为准” or equivalent English disclaimers to compensate for missing input or unperformed checks.
 - When evidence is missing, omit the unsupported metric/chart, narrow the claim, or use a factual qualitative explanation. Record production questions in `notes` or the handoff, away from the slide canvas. Never fabricate evidence or present synthetic numbers as measured results.
 - Keep audience-relevant facts: requested test-plan statuses, decision-critical limitations, exact quotations, real citations, and a concise forecast/sample-data label when needed to interpret the content. State these once in ordinary readable content, with their actual scope.
