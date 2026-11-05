@@ -82,3 +82,11 @@ h1 {
   color: #617168;
   line-height: 1.5;
 }
+
+:root {
+  --chart-a: #f66b46;
+  --chart-b: #467ae8;
+  --chart-grid: #d5d9d5;
+  --chart-text: #17202d;
+  --chart-muted: #67717d;
+}

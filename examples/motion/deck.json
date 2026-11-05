@@ -1,7 +1,10 @@
 {
   "version": 1,
   "title": "ChaosPPT · 控件动画与平滑过渡",
-  "size": { "width": 1600, "height": 900 },
+  "size": {
+    "width": 1600,
+    "height": 900
+  },
   "theme": "theme.css",
   "fonts": [
     {
@@ -10,33 +13,45 @@
       "weight": "100 900"
     }
   ],
-  "render": { "timeoutMs": 30000, "scale": 2 },
+  "render": {
+    "timeoutMs": 30000,
+    "scale": 2
+  },
   "slides": [
     {
       "id": "entrance",
       "file": "01.html",
       "title": "进入与展开",
-      "notes": "首次自动淡入；第一次点击飞入；第二次点击条形依次展开；再点击进入下一页"
+      "notes": "首次自动淡入；第一次点击飞入；接下来每次点击按规划、排版、协作、交付的顺序展开橙蓝双系列条形，数值随后淡入；再点击进入下一页。数据按用户参考图：A=[54,68,81,94]，B=[36,47,63,72]，零基线0–100，每单位5.6 CSS px，均为原生形状与文本控件"
     },
     {
       "id": "shared-a",
       "file": "02.html",
       "title": "共享组件起点",
-      "transition": { "effect": "fade", "durationMs": 400 },
+      "transition": {
+        "effect": "fade",
+        "durationMs": 400
+      },
       "notes": "下一页用相同 shared key 匹配 focus-card"
     },
     {
       "id": "shared-b",
       "file": "03.html",
       "title": "共享组件终点",
-      "transition": { "effect": "morph", "durationMs": 900 },
-      "notes": "卡片保持同一共享标识，改变位置与尺寸；点击展开左侧条形"
+      "transition": {
+        "effect": "morph",
+        "durationMs": 900
+      },
+      "notes": "卡片保持同一共享标识，只改变位置，宽高与内部文字规格保持一致；点击展开左侧条形"
     },
     {
       "id": "exit",
       "file": "04.html",
       "title": "离场效果",
-      "transition": { "effect": "fade", "durationMs": 400 },
+      "transition": {
+        "effect": "fade",
+        "durationMs": 400
+      },
       "notes": "依次点击：左组淡出，中组向右飞出，右组从左擦除"
     }
   ]

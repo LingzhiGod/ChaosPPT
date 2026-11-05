@@ -1,4 +1,4 @@
 interface:
   display_name: "ChaosPPT"
   short_description: "Design editable slides with explicit controls and native motion"
-  default_prompt: "Use $chaosppt to establish a unified theme, design slides with explicit controls, and export editable PPTX and PDF; add mapped animations when requested."
+  default_prompt: "Use $chaosppt to establish a unified theme, design slides with explicit controls, and export editable PPTX and PDF; use supported animations where they aid understanding, keeping shared elements the same size across slides."

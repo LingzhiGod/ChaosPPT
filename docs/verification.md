@@ -62,3 +62,11 @@ Environment: macOS arm64, Node v22.23.2, locked Playwright Chromium.
 - The four-page native example contains 10 control effects. Bundled LibreOffice imported the PPTX as real entrance/exit Fade, Fly and Wipe behaviors with direction and trigger modes; it falls back to Fade for Morph. The import receipt is in artifacts/motion/native-import-check.json outside version control.
 - Morph uses stable !! names for shared objects/members and page-unique names for others. Verification checks actual native timing and requested/applied correspondence, not just metadata presence.
 - This is semantic effect correspondence, not cross-software frame identity. Native PowerPoint/WPS slideshow playback was not certified. Media targets, media-containing groups and arbitrary CSS animation are not silently mapped.
+
+
+## Motion example refinement (2026-11-05)
+
+- P2/P3 shared focus-card now has identical 530×300 bounds; title/body widths are 474px and relative offsets/font sizes stay equal. This is a recommended authoring constraint, not an engine-level ban on resizing or a claim that all native playback issues are fixed.
+- P1 chart matches the supplied reference values: planning 54/36, layout 68/47, collaboration 81/63, delivery 94/72. The 0–100 axis uses 5.6 CSS px per unit, with 8 native colored bars and native numeric labels.
+- Each click reveals one category's orange/blue bars; the blue bar starts 120ms later, and both values fade in after the bars finish. The full example now has 23 native effects.
+- Export/verify, native widths/colors/values, browser intermediate visibility and equal-size shared geometry were checked. LibreOffice imports all 23 native effects; this remains import verification rather than PowerPoint/WPS slideshow certification.
