@@ -31,12 +31,67 @@ export async function verifyEditableSlide({
   );
   const tree = first(parse(xml), "p:spTree");
   check(!!tree, "editable shape tree");
-  const objects = Array.from(tree.childNodes).filter((n) =>
+  let objects = Array.from(tree.childNodes).filter((n) =>
     ["p:sp", "p:pic", "p:graphicFrame", "p:grpSp", "p:cxnSp"].includes(
       n.nodeName,
     ),
   );
   const media = slide.media || [];
+  if (scene.authoringMode === "controls") {
+    const definitions = new Map(
+      [...scene.nodes, ...scene.groups, ...media].map((n) => [n.objectName, n]),
+    );
+    const leaves = new Map(),
+      all = [];
+    function children(parent) {
+      return Array.from(parent.childNodes).filter((n) =>
+        ["p:sp", "p:pic", "p:grpSp", "p:graphicFrame", "p:cxnSp"].includes(
+          n.nodeName,
+        ),
+      );
+    }
+    function treeCheck(expected, actual) {
+      check(expected.length === actual.length, "control group child count");
+      for (let i = 0; i < expected.length; i++) {
+        const name = expected[i],
+          o = actual[i],
+          n = definitions.get(name);
+        check(!!n, "declared group/control");
+        position(o, n);
+        all.push(o);
+        if (n.children) {
+          check(o.nodeName === "p:grpSp", "native group object");
+          const transform = first(o, "a:xfrm"),
+            off = first(transform, "a:off"),
+            ext = first(transform, "a:ext"),
+            childOff = first(transform, "a:chOff"),
+            childExt = first(transform, "a:chExt");
+          check(
+            !!childOff &&
+              !!childExt &&
+              off.getAttribute("x") === childOff.getAttribute("x") &&
+              off.getAttribute("y") === childOff.getAttribute("y") &&
+              ext.getAttribute("cx") === childExt.getAttribute("cx") &&
+              ext.getAttribute("cy") === childExt.getAttribute("cy"),
+            "group child coordinate mapping",
+          );
+          treeCheck(n.children, children(o));
+        } else {
+          check(!leaves.has(name), "duplicate leaf control");
+          leaves.set(name, o);
+        }
+      }
+    }
+    treeCheck(scene.roots, objects);
+    check(
+      all.length === scene.controls.length,
+      "one PPT object per declared control",
+    );
+    const ids = all.map((o) => first(o, "p:cNvPr")?.getAttribute("id"));
+    check(new Set(ids).size === ids.length, "unique group/control ids");
+    objects = [...scene.nodes, ...media].map((n) => leaves.get(n.objectName));
+    check(objects.every(Boolean), "all declared control leaves present");
+  }
   check(
     objects.length === scene.nodes.length + media.length,
     "editable object count",
@@ -87,7 +142,55 @@ export async function verifyEditableSlide({
     const n = scene.nodes[i],
       o = objects[i];
     position(o, n);
-    if (n.type === "text") {
+    if (n.type === "richtext") {
+      check(o.nodeName === "p:sp", "rich text control object");
+      const body = first(o, "p:txBody");
+      check(!!body, "rich text body");
+      check(
+        first(body, "a:bodyPr").getAttribute("wrap") ===
+          (n.wrap ? "square" : "none"),
+        "rich text wrapping policy",
+      );
+      const bodyPr=first(body,'a:bodyPr');for(const [attr,index] of [['tIns',0],['rIns',1],['bIns',2],['lIns',3]])check(Number(bodyPr.getAttribute(attr))===Math.round(n.padding[index]*9525),'rich text CSS padding');
+      const paragraphs = Array.from(body.childNodes).filter(
+        (e) => e.nodeName === "a:p",
+      );
+      check(
+        paragraphs.length === n.paragraphs.length,
+        "native paragraph count",
+      );
+      for (let p = 0; p < paragraphs.length; p++) {
+        const runs = Array.from(paragraphs[p].childNodes).filter(
+          (e) => e.nodeName === "a:r",
+        );
+        check(
+          runs.length === n.paragraphs[p].runs.length,
+          "native rich text run count",
+        );
+        for (let r = 0; r < runs.length; r++) {
+          const expected = n.paragraphs[p].runs[r],
+            props = first(runs[r], "a:rPr");
+          check(
+            first(runs[r], "a:t")?.textContent === expected.text,
+            "rich text content",
+          );
+          check(
+            Number(props.getAttribute("sz")) ===
+              Math.round(expected.style.fontSize * 75) &&
+              props.getAttribute("b") === (expected.style.bold ? "1" : "0") &&
+              props.getAttribute("i") === (expected.style.italic ? "1" : "0"),
+            "rich text run formatting",
+          );
+          check(
+            first(props, "a:srgbClr")?.getAttribute("val") ===
+              expected.style.color.color &&
+              first(props, "a:latin")?.getAttribute("typeface") ===
+                expected.style.fontFace,
+            "rich text run color/font",
+          );
+        }
+      }
+    } else if (n.type === "text") {
       check(
         o.nodeName === "p:sp" && !!first(o, "p:txBody"),
         "native text object",

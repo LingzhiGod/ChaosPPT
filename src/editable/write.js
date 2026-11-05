@@ -1,5 +1,6 @@
 import path from "node:path";
 export function writeEditableScene(slide, scene, temp) {
+  if (scene.background) slide.background = { color: scene.background.color };
   for (const n of scene.nodes) {
     const b = n.bounds,
       position = {
@@ -9,7 +10,32 @@ export function writeEditableScene(slide, scene, temp) {
         h: b.height / 96,
         objectName: n.objectName,
       };
-    if (n.type === "text") {
+    if (n.type === "richtext") {
+      // The package pass writes paragraphs/runs explicitly into this one text shape.
+      slide.addText(n.text, {
+        ...position,
+        margin: n.padding.map((v) => v * 0.75),
+        fontFace: n.style.fontFace,
+        fontSize: n.style.fontSize * 0.75,
+        wrap: n.wrap,
+        fit: "none",
+        valign: "top",
+        color: n.style.color.color,
+        fill: n.fill
+          ? {
+              color: n.fill.color,
+              transparency: Math.round((1 - n.fill.alpha) * 100),
+            }
+          : { color: "FFFFFF", transparency: 100 },
+        line: n.line
+          ? {
+              color: n.line.color,
+              transparency: Math.round((1 - n.line.alpha) * 100),
+              width: n.line.width * 0.75,
+            }
+          : { color: "FFFFFF", transparency: 100, width: 0 },
+      });
+    } else if (n.type === "text") {
       const s = n.style;
       slide.addText(n.text, {
         ...position,

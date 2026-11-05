@@ -122,7 +122,7 @@ export async function initProject(destination) {
   await mkdir(root, { recursive: true });
   if ((await readdir(root)).length)
     throw new Error("Init destination must be empty");
-  await cp(path.join(engineRoot, "templates/starter"), root, {
+  await cp(path.join(engineRoot, "templates/controls"), root, {
     recursive: true,
   });
   return { root, manifest: "deck.json" };

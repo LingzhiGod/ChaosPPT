@@ -119,3 +119,10 @@ img {
 video[data-pptx-media] {
   object-fit: fill;
 }
+[data-pptx],
+[data-pptx-group] {
+  isolation: isolate;
+}
+[data-pptx="shape"][data-pptx-shape="ellipse"] {
+  border-radius: 50%;
+}

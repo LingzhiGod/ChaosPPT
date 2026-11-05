@@ -17,6 +17,7 @@ import { loadProject } from "./project.js";
 import { startServer, projectFingerprint } from "./server.js";
 import { prepareMedia, captureMedia, captureBackground } from "./media.js";
 import { inspectDOM } from "./diagnostics.js";
+import { extractControls } from "./editable/controls.js";
 import { captureEditableScene } from "./editable/capture.js";
 import { finalizeEditablePackage } from "./editable/package.js";
 import { writeEditableScene } from "./editable/write.js";
@@ -40,7 +41,10 @@ function summarize(slides) {
     slides,
   };
 }
-export async function visitSlides(root, { ids, scale, onPage } = {}) {
+export async function visitSlides(
+  root,
+  { ids, scale, onPage, validateControls = false } = {},
+) {
   const project = await loadProject(root),
     d = project.manifest;
   if (ids?.some((id) => !d.slides.some((s) => s.id === id)))
@@ -147,6 +151,11 @@ export async function visitSlides(root, { ids, scale, onPage } = {}) {
                 ),
             );
             report = await page.evaluate(inspectDOM);
+            if (validateControls) {
+              const controls = await page.evaluate(extractControls);
+              for (const i of controls?.errors || [])
+                issues.push({ ...i, slideId: slide.id });
+            }
             ready = true;
           })(),
           d.render.timeoutMs,
@@ -181,7 +190,10 @@ export async function visitSlides(root, { ids, scale, onPage } = {}) {
   }
 }
 export async function inspectProject(root, options = {}) {
-  const { project, ...report } = await visitSlides(root, options);
+  const { project, ...report } = await visitSlides(root, {
+    ...options,
+    validateControls: true,
+  });
   return { project: project.root, ...report };
 }
 async function publish(root, temp) {
@@ -253,6 +265,7 @@ export async function buildProject(
     const scenes = new Map();
     const conversion = { version: 1, mode: pptxMode, slides: [] };
     const result = await visitSlides(root, {
+      validateControls: pptxMode === "editable",
       ids,
       scale,
       onPage: async ({ page, slide, manifest: d, report, issues, media }) => {
@@ -420,7 +433,10 @@ export async function buildProject(
         compression: true,
       });
       if (pptxMode === "editable")
-        await finalizeEditablePackage(path.join(temp, "deck.pptx"));
+        await finalizeEditablePackage(
+          path.join(temp, "deck.pptx"),
+          images.map((image) => scenes.get(image.id)),
+        );
       artifacts.push({
         file: "deck.pptx",
         format: "pptx",
@@ -439,7 +455,7 @@ export async function buildProject(
     }
     const build = {
       version: 1,
-      engine: "0.3.0",
+      engine: "0.4.0",
       sourceFingerprint: fingerprint,
       createdAt: new Date().toISOString(),
       size: project.manifest.size,

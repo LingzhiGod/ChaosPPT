@@ -42,3 +42,13 @@ Environment: macOS arm64, Node v22.23.2, locked Playwright Chromium.
 - Native text uses visual-line/run fragments, not full paragraph reflow. SVG/Canvas, charts/tables and complex styles are raster fallbacks. No claim of 95% editability, pixel-identical native typography, or native PowerPoint playback/compatibility certification.
 - Preserved the newer main-branch design-principles and audience-focused copy rules while integrating the export changes.
 - Final dependency audit identified a newly reported Zod advisory in 4.6.5; the locked dependency was upgraded to 4.6.6 and the subsequent audit reported zero known vulnerabilities. The unavailable local proxy was bypassed per-command without changing user proxy settings.
+
+## v0.4 explicit controls (2026-11-05)
+
+- Full suite: 53 tests pass, including explicit rich text, real nested group structure, one-to-one object counts, media inside groups, group-coordinate tampering, invalid declaration rejection, old-output preservation, and the new two-page starter.
+- Text controls preserve paragraph breaks, inline emphasis, Unicode NBSP/full-width spaces and nowrap. Asymmetric CSS padding is written directly to the correct OOXML insets. Nested underline emphasis is retained.
+- Independent review reproduced hidden-run visible descendants, overly broad whitespace collapse, nowrap/indentation and unmarked outlines. The original repros were rechecked after correction; unsupported structures are rejected, not silently discarded.
+- Actual two-page control PPTX rendered with bundled LibreOffice using the supplied Noto Sans SC font. The XML contains genuine p:grpSp and a single p:txBody per text control. No claim of native PowerPoint UI testing.
+- Explicit raster and legacy local fallback images are alpha-trimmed. The old showcase Canvas is now at x=1190,y=588,w=338,h=170 instead of a full-slide transparent picture.
+- Installed Skill staged with its complete engine/templates and dependency audit: zero known vulnerabilities. New authoring uses explicit controls; compatibility export and old unmarked inference remain migration paths.
+- Same-input transaction check: baseline produces no native group and fragmented text; modified produces one group and one text frame; rollback restores original source hashes and baseline behavior. Artifacts and literal outputs are recorded outside version control under artifacts/editable-transaction, retaining the previous transaction history.

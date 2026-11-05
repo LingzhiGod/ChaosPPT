@@ -2,7 +2,7 @@
 
 **面向 Agent 的 HTML 演示文稿引擎与 Skill。** 在 HTML/CSS/JS 中设计，由 Chromium 排版、检查并导出 PDF / 图片式 PPTX。
 
-当前版本 v0.3.0，Node.js 20+。可直接运行，默认离线素材，无服务端账号。
+当前版本 v0.4.0，Node.js 20+。可直接运行，默认离线素材，无服务端账号。
 
 Skill 默认内置 [PPT 通用设计原则](skills/chaosppt/references/design-principles.md)：跨页共享主题与语义色、清晰的层级与留白、按比较/趋势/构成/分布/关系等任务选图、表格精确查数、数据编码准确性和全稿视觉审阅。具体视觉样式继续由用户品牌与项目主题决定，规则由 Agent 在规划、编写和交付前执行。
 
@@ -170,7 +170,6 @@ node src/cli.js verify examples/media
 
 更多规则见 Skill 的 `references/engine.md` 媒体章节。当前导出引擎无需 ffmpeg。
 
-
 ## 双模式 PPTX 导出（v0.3）
 
 ```sh
@@ -182,17 +181,44 @@ node src/cli.js export ./my-deck --pptx-mode editable
 node src/cli.js verify ./my-deck
 ```
 
-| 内容 | 兼容模式 | 可编辑模式 |
-| --- | --- | --- |
-| 文字 | 页面截图 | 原生文本框，按视觉行/富文本片段拆分 |
-| 背景、矩形、圆角卡片、实线边框 | 页面截图 | 支持范围内映射原生形状 |
-| 普通图片 | 页面截图 | 独立图片对象，保留已渲染的裁剪结果 |
-| Canvas、SVG、复杂特效、表格 | 页面截图 | 局部或必要时整页栅格化回退 |
-| 标记的 MP4/GIF | 原生媒体 | 原生媒体 |
-| PDF/PNG | 浏览器静态输出 | 同一浏览器静态输出，不受 PPTX 模式影响 |
+| 内容                           | 兼容模式       | 可编辑模式                             |
+| ------------------------------ | -------------- | -------------------------------------- |
+| 文字                           | 页面截图       | 原生文本框，按视觉行/富文本片段拆分    |
+| 背景、矩形、圆角卡片、实线边框 | 页面截图       | 支持范围内映射原生形状                 |
+| 普通图片                       | 页面截图       | 独立图片对象，保留已渲染的裁剪结果     |
+| Canvas、SVG、复杂特效、表格    | 页面截图       | 局部或必要时整页栅格化回退             |
+| 标记的 MP4/GIF                 | 原生媒体       | 原生媒体                               |
+| PDF/PNG                        | 浏览器静态输出 | 同一浏览器静态输出，不受 PPTX 模式影响 |
 
 转换清单在 `dist/conversion.json`，包含各类对象数量、回退元素及原因、字体要求。需要固定局部外观时，在容器上设置 `data-pptx-export="raster"`。可编辑模式是混合导出，不承诺 95% 原生化，也不把 DOM 文字统计当作整体可编辑率。
 
 **字体与验收：** 可编辑 PPTX 不内嵌字体，接收端需安装报告中的字体；否则可能出现替换、错位或缺字。文字采用视觉行/片段文本框，尚非完整段落自动重排。务必检查实际 PPTX 的渲染，不能仅看参考 PNG。兼容模式继续作为视觉保真优先的选择。
 
 示例源文件：`examples/editable`。两种模式都会替换该项目的 dist；需要保留对照产物时，先复制到项目目录之外。无需修改现有 HTML 即可尝试新模式；复杂 CSS 会被明确回退而非假装已经转成原生对象。
+
+## 显式控件与原生编组（v0.4）
+
+新项目不再依赖自由 HTML 的自动猜测。`init` 默认生成两页显式控件模板；HTML/CSS 负责布局，控件声明负责 PPT 对象边界。
+
+```html
+<section class="slide" data-pptx-layout="controls">
+  <div data-pptx-group="card">
+    <div data-pptx="text" data-pptx-id="body">
+      一个完整段落，包含 <b>加粗文字</b>。<br />换行仍在同一个文本框内。
+    </div>
+  </div>
+</section>
+```
+
+- `text` → 一个富文本框，不再按行/加粗片段拆成多个对象。
+- `shape` / `image` / `media` → 各一个原生形状、图片或媒体对象。
+- `group` 或 `data-pptx-group` → 真正的 PPT 编组，支持嵌套；组内对象仍独立可编辑。
+- `raster` → 必要时显式保留复杂绘制，并按非透明像素裁紧边界。
+- 未标记的可见内容、重复 ID、不支持的控件结构会明确报错；兼容模式仍可输出浏览器外观。
+
+新创作使用显式控件；旧 HTML 的推断式导出保留为迁移路径。详见 [控件契约](skills/chaosppt/references/controls.md)。组容器不直接绘制背景，背景应另设 shape；一个文本框内使用 span/b/strong/em/i/u/s/br，不嵌套其他控件。
+
+```sh
+node src/cli.js export examples/controls --pptx-mode editable
+node src/cli.js verify examples/controls
+```

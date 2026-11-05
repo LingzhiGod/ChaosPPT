@@ -1,4 +1,4 @@
-# Engine reference — v0.3
+# Engine reference — v0.4
 
 Deck planning and visual review follow the built-in [design principles](design-principles.md): shared theme/masters, stable semantic encodings, task-based chart selection and whole-deck review. These guide Agent decisions and do not add automatic design checks to the renderer.
 
@@ -19,7 +19,7 @@ node RUNNER verify PROJECT --json
 
 `--slides` supports inspect/render only and keeps manifest order, regardless of option order. `export` always builds all pages. `--scale` is 1–4 and affects PNG/PPTX resolution, not layout. PDF modes: `vector` (browser print, text where possible) and `raster` (one screenshot per page). Exit statuses: 0 success, 1 failed diagnostics/verification, 2 invocation/config/runtime error. Errors with `--json` are JSON on stdout. `dev` prints its URL and remains running until interrupted.
 
-The engine bundles a three-page Chinese starter with a local OFL Noto Sans SC variable font. Keep its OFL notice when distributing the font. Installed skills carry the engine and dependencies in `assets/engine`; the repository installer prepares this bundle. If manually copying only the skill folder, set `CHAOSPPT_ENGINE` to an engine repository with dependencies installed.
+New projects use a two-page Chinese explicit-controls starter (the legacy three-page starter remains in the engine templates) with a local OFL Noto Sans SC variable font. Keep its OFL notice when distributing the font. Installed skills carry the engine and dependencies in `assets/engine`; the repository installer prepares this bundle. If manually copying only the skill folder, set `CHAOSPPT_ENGINE` to an engine repository with dependencies installed.
 
 ## Manifest
 
@@ -155,7 +155,7 @@ node RUNNER export PROJECT --format pdf,pptx --pptx-mode editable
 
 `compatible` is the unchanged default: a browser-rendered full-page image (with marked native media on top). It is the preferred visual-fidelity route. `editable` is an opt-in hybrid route. Both preserve the same reference PNG/PDF capture and native MP4/GIF behavior. The mode is a CLI export option, not a deck.json field. Each successful build replaces dist, so copy completed outputs outside the project before building another mode.
 
-Editable mappings:
+Legacy inference mappings (unmarked pre-v0.4 pages only; new pages follow the [explicit controls contract](controls.md)):
 - Visible text becomes native text boxes using measured visual lines/runs; bold, italic, color, font size, tracking and basic decorations are mapped. Mixed formatting and wrapped paragraphs can become multiple text boxes. Reflow, semantic paragraph structure, hyperlinks and accessibility semantics are not reconstructed.
 - Solid backgrounds, rectangles, uniform rounded cards, solid borders and simple lines become native shapes. Flex/Grid is resolved by the browser to fixed positions, not exported as responsive layout rules.
 - Ordinary `<img>` becomes a separately movable/resizable/replaceable picture using its browser-rendered pixels. Cropping is baked into those pixels, so this is not recovery of original image regions beyond the visible crop.
@@ -169,3 +169,10 @@ Inspect `dist/conversion.json`: per-page text/shape/image/fallback/media counts,
 Fonts are NOT embedded in editable PPTX. Install the reported font families on the target presentation machine; otherwise substitution, changed spacing or missing glyphs can occur. The bundled example font may be loaded by HTML without being installed for Office. Inspect native PPTX with the same fonts available. PNG/PDF remain useful browser references, not evidence that the native PPTX looks identical. Use compatible mode when appearance takes priority.
 
 Repository showcase: `examples/editable`. This release adds native text/basic shapes/pictures; native data charts/tables, SVG path editing, automatic font embedding and native transitions remain separate future features.
+
+
+## Explicit authoring (v0.4)
+
+New `init` projects use `.slide[data-pptx-layout="controls"]` and explicit control IDs. Any data-pptx or data-pptx-group declaration also activates strict controls mode for that page. Read [controls.md](controls.md) for required markup, supported styles and 1:1 semantics. `inspect` validates declarations; editable export blocks invalid controls, while compatible export can still capture their browser appearance.
+
+Text controls emit one rich-text frame, preserving semantic inline runs and explicit paragraph breaks. Groups emit native nested `p:grpSp`. Raster controls—and legacy local fallback assets—are trimmed to their nontransparent bounds before PPTX insertion; complete-scene compositing fallbacks stay complete scenes. The conversion report records authoringMode, control IDs, richtext/group counts and fonts. Structural verify checks group hierarchy, neutral child transforms, one-to-one control identity, text paragraphs/runs and run formatting. Old HTML remains an explicit migration path, not the recommended new-authoring surface.

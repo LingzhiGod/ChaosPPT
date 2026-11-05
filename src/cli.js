@@ -4,11 +4,11 @@ import { initProject } from "./project.js";
 import { startServer } from "./server.js";
 import { inspectProject, buildProject } from "./renderer.js";
 import { verifyProject } from "./verify.js";
-const help = `ChaosPPT 0.3.0 — HTML presentation engine
+const help = `ChaosPPT 0.4.0 — HTML presentation engine
 
 Usage: chaosppt <command> <project-dir> [options]
 
-  init       Create a Chinese 3-page starter in an empty directory
+  init       Create a Chinese 2-page explicit-controls starter in an empty directory
   dev        Local preview with keyboard navigation and live reload
   inspect    Diagnose all slides without writing artifacts
   render     Render PNGs and report to <project>/dist
